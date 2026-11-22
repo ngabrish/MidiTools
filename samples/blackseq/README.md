@@ -9,12 +9,15 @@ then push X.
 
 ## Before you start
 
-1. Make a backup of the SD card: copy the `PROJECTS` folder to the computer (page 27).
+1. Make a backup of the SD card: copy the full card to the computer. Do not format the
+   card and do not delete files from it. The manual has no factory reset, and it does not
+   say if the module makes the files in `SYSTEM` again when they are missing.
 2. Push SETUP, turn DATA to the **Info** menu and push DATA. Write down the firmware
    version and the bootloader version (page 25).
-3. In the SETUP menu, open the **Default** settings (page 26). Write down the default note,
-   the default gate length and the default gate state. The factory values are C0, 50 % and
-   ON. Do not change them.
+3. In the SETUP menu, open the **Default** settings (page 26). Turn DATA to select a
+   setting and turn step encoder 1 to change it. Set the factory values: default note C0,
+   default gate length 50 %, gate state ON. These settings are the only module settings
+   that change a blank pattern. Write down the values that the display shows.
 4. Make a new project (page 13): `SHIFT + PATTERN`, push DATA, turn DATA to **NEW**, enter
    the name `RETEST` with the step encoders, push DATA to confirm.
 5. Select bank 1: hold BANK and push step encoder 1 (page 5).
@@ -82,9 +85,10 @@ CH1 step 1 by one semitone, set it back to the default note, and save. Write in
 1. Switch off the power of the case, then remove the SD card (page 27).
 2. Copy the full folder `PROJECTS/RETEST` to `samples/blackseq/project/RETEST`.
    Do not rename files. Do not open them in an editor.
-3. Write the list of files and folders in the root of the SD card in `MANIFEST.md`.
-4. Complete `MANIFEST.md`.
-5. Commit the files to this repository, or attach a zip file of `samples/blackseq/` to
+3. If the card has a `SYSTEM` folder, copy it to `samples/blackseq/SYSTEM`.
+4. Write the list of files and folders in the root of the SD card in `MANIFEST.md`.
+5. Complete `MANIFEST.md`. The checklist page makes this text from your entries.
+6. Commit the files to this repository, or attach a zip file of `samples/blackseq/` to
    the chat.
 
 Claude Code makes the named copies (`blank.SEQ` and so on) from the project folder.
