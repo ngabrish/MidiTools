@@ -1,7 +1,7 @@
 # Black Sequencer `.SEQ` format
 
-Status of this document: **phase 0, first sample set analysed.** The fields that version 1
-needs are confirmed, with three exceptions (Q1 to Q3 below). No code in this repository
+Status of this document: **phase 0, sample set analysed.** All fields that version 1
+needs are confirmed by samples. No code in this repository
 writes a `.SEQ` file.
 
 ## Rules for this document
@@ -20,7 +20,8 @@ the sample files on each build.
 ## Sources
 
 - **Samples**: `samples/blackseq/PROJECTS/RETEST/00/00.SEQ` to `13.SEQ`, saved by Nate on
-  2026-11-22. Module firmware 1.06, bootloader 0.2. `NN.SEQ` is pattern NN + 1 of the procedure in `samples/blackseq/README.md`.
+  2026-11-22. Nate saved P7, P9 and P12 a second time, because the first files did not
+  show the intended change; the files in the repository are the second ones. Module firmware 1.06, bootloader 0.2. `NN.SEQ` is pattern NN + 1 of the procedure in `samples/blackseq/README.md`.
   In this document, "P1" to "P14" are those patterns.
 - **Factory project**: `samples/blackseq/PROJECTS/FACTORY/00/00.SEQ` to `06.SEQ`, from the
   same card. The module or Erica Synths made these files, but no manifest says what they
@@ -44,16 +45,17 @@ Each line is the full output of `blackseq diff 00.SEQ NN.SEQ`.
 | P4 | CH1 step 16 note C-3 to D-4 | 522..523 | `10 0e` (3600) | `88 13` (5000) |
 | P5 | CH2 step 1 note C-3 to E-4 | 2310..2311 | `10 0e` (3600) | `50 14` (5200) |
 | P6 | CH1 step 1 gate length to 80 % | 16 | `32` (50) | `50` (80) |
-| P7 | CH1 step 1 muted | none | | |
+| P7 | CH1 step 1 muted | 22 | `01` | `00` |
 | P8 | CH1 step 1 gate length to 0 | 16 | `32` (50) | `00` (0) |
-| P9 | CH1 step 1 gate length "10" | 16 | `32` (50) | `0a` (10) |
+| P9 | CH1 step 1 gate length to the maximum | 16 | `32` (50) | `64` (100) |
 | P10 | CH1 steps 1 and 2 merged | 22 | `01` | `03` |
 | P11 | CH1 last step to 8 | 2189 | `0f` (15) | `07` (7) |
-| P12 | CH1 last step to 64, step 64 note to F-4 | 2189 | `0f` (15) | `3f` (63) |
+| P12 | CH1 last step to 64, step 64 note to F-4 | 2154..2155 and 2189 | `10 0e` (3600) and `0f` (15) | `b4 14` (5300) and `3f` (63) |
 | P13 | CH1 master track length to 32 | 5 | `10` (16) | `20` (32) |
 | P14 | None (second blank) | none | | |
 
-Three results are not what the procedure intended. See Q1 to Q3.
+An earlier file for P9 had gate length 10 %: file offset 16 was `0a` (10). That file is
+not in the repository now, but it is one more data point for the percent encoding.
 
 ## File layout
 
@@ -84,7 +86,7 @@ The note is the first field of a step.
 
 | Blob offset | Size | Content | Evidence | Status |
 | --- | --- | --- | --- | --- |
-| 34 × s | 34 | Step s (0 = step 1 ... 63 = step 64) | P2: step 1 note at blob offset 0. P4: step 16 note at blob offset 510 = 34 × 15 | confirmed by samples |
+| 34 × s | 34 | Step s (0 = step 1 ... 63 = step 64) | P2: step 1 note at blob offset 0. P4: step 16 note at blob offset 510 = 34 × 15. P12: step 64 note at blob offset 2142 = 34 × 63 | confirmed by samples |
 | 2176 | 116 | Footer | P11, P12: last step at blob offset 2177 | confirmed by samples (position of byte 1) |
 
 This is hypothesis H2 of the first version of this document. The reference code uses a
@@ -100,14 +102,14 @@ Offsets are in the 34-byte step.
 
 | Offset | Size | Encoding | Content | Blank | Evidence | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| 0 | 4 | int32 | **Note** in cents: 1200 × octave + 100 × semitone, with the octave number that the module shows. C-3 = 3600 | 3600 | P2, P3, P4, P5 | confirmed by samples. Only bytes 0 and 1 changed; bytes 2 and 3 are 0 in all files |
-| 4 | 1 | uint8 | **Gate length** in percent. 0 = no gate | 50 | P6 (80), P8 (0), P9 (10) | confirmed by samples for 0 to 80. The maximum value is open (Q2) |
+| 0 | 4 | int32 | **Note** in cents: 1200 × octave + 100 × semitone, with the octave number that the module shows. C-3 = 3600 | 3600 | P2, P3, P4, P5, P12 | confirmed by samples. Only bytes 0 and 1 changed; bytes 2 and 3 are 0 in all files |
+| 4 | 1 | uint8 | **Gate length** in percent, 0 to 100. 0 = no gate. 100 = full gate | 50 | P6 (80), P8 (0), P9 (100) | confirmed by samples |
 | 5 | 1 | uint8 | Ratchet count − 1 | 0 | `cardmap.py` | reference code only |
 | 6 | 1 | uint8 | Arpeggio mode | 0 | `cardmap.py` | reference code only |
 | 7 | 1 | bits | Repeat count − 1, bit 7 = merge | 0 | `cardmap.py` | reference code only |
 | 8 | 1 | uint8 | Glide | 0 | `cardmap.py` | reference code only |
 | 9 | 1 | uint8 | Probability code, 10 = always | 10 | `cardmap.py` | reference code only |
-| 10 | 1 | bits | **Gate flags.** Blank = 1. Step 1 of two merged steps = 3; step 2 stays 1 | 1 | P10 | confirmed by samples: bit 1 = merged with the next step. Bit 0 is open (Q1) |
+| 10 | 1 | bits | **Gate flags.** Bit 0 = gate on (0 = muted step). Bit 1 = merged with the next step | 1 | P7 (0), P10 (3 on step 1, step 2 stays 1) | confirmed by samples |
 | 11 | 1 | | | 0 | none | unknown |
 | 12 | 2 | int16 | Micro-timing | 0 | `cardmap.py` | reference code only |
 | 14 | 1 | | | 0 | none | unknown |
@@ -120,9 +122,10 @@ Offsets are in the 34-byte step.
 | 32 | 1 | uint8 | Modulation trigger | 0 | `cardmap.py` | reference code only |
 | 33 | 1 | uint8 | Modulation level | 100 | `codec.py` | reference code only |
 
-Supporting evidence from the factory project (not proof): the gate flags byte has the
-values 0, 1 and 3 there, and the gate length has the value 100. This agrees with
-"bit 0 = gate on" and "100 = full gate".
+Mute and gate length are independent: a muted step keeps its gate length (P7), and a
+step with gate length 0 keeps gate flags 1 (P8). A full gate (P9) does not set the merge
+bit. The factory project agrees: its gate flags are 0, 1 and 3, and its gate lengths
+include 100.
 
 ### Footer fields
 
@@ -158,6 +161,9 @@ Other files on the card. Their content is out of scope for version 1, and the li
 must not write them:
 
 - `PROJECTS/<name>/INFO.DAT`, 8 bytes. The reference code reads a float32 tempo at offset 2.
+  The module changes the last byte with no user edit of project settings: it was `0d`
+  after the first save session and `0b` after the second one. Probably the last selected
+  pattern. Unknown.
 - `PROJECTS/<name>/<bank>/BANK.DAT`, 656 bytes in `RETEST`. The module made one in bank
   `01` also, where no pattern is saved.
 - `SYSTEM/SCALES.DAT`, 256 bytes, the scale list.
@@ -170,9 +176,6 @@ module did not make, and must `BANK.DAT` list the pattern? See Q5.
 
 | # | Question | What answers it |
 | --- | --- | --- |
-| Q1 | **Mute.** `06.SEQ` (P7) is equal to the blank file. Does the module store a muted step, and where? | Save P7 again. On the GATE page, make sure that the grid shows step 1 as muted and that RECORD blinks before the save. If the new file is still equal to blank, the module does not store mute in the pattern, or stores it in a different file. |
-| Q2 | **Full gate.** `08.SEQ` (P9) has gate length 10, which is 10 %, not the maximum. What is the value of a full gate, and does it change the gate flags byte? | Save P9 again with step encoder 1 turned fully clockwise. Expected, not confirmed: 100. |
-| Q3 | **Step 64 note.** `11.SEQ` (P12) has last step 64, but no note changed. | Save P12 again with step 64 (bar 4, encoder 16) at F-4. Expected: file offset 2154, value 5300. |
 | Q4 | **MIDI note number.** The file value 3600 is the note that the module shows as C-3. Which MIDI note number is that on the MIDI input and output of the module? The converter needs this. | Nate: send one known MIDI note to the module and read the note name, or tell which convention you want. Without a test, the converter uses value = MIDI note × 100 and reports the octave name that the module shows. |
 | Q5 | Does the module load a `.SEQ` file that a computer copied into a bank folder? | The phase 1 checkpoint (three generated files on a test card). |
 | Q6 | Merge of three or more steps: do all steps except the last one get bit 1? | A sample with steps 1 to 3 merged. Necessary only if the converter writes merged steps. |
@@ -182,7 +185,8 @@ module did not make, and must `BANK.DAT` list the pattern? See Q5.
 - `Step.midiNote` cannot be the storage unit: the file stores cents. The codec converts.
   The mapping from MIDI note number to cents waits for Q4.
 - `Step.gateLength` as a fraction 0.0 to 1.0 maps to the percent byte.
-- "Gate off" for a rest can be written as gate length 0, which is confirmed (P8). It does
-  not need Q1.
+- A rest can be written in two confirmed ways: gate flags bit 0 = 0 (mute, P7), or gate
+  length 0 (P8). Mute keeps the gate length of the step, so it is the better match for
+  `Step.gateOn = false`.
 - A note longer than one step needs the merge bit (P10). A merge of two steps is confirmed.
 - `Pattern` needs the master track length, or the codec must keep it from the template.
