@@ -16,6 +16,8 @@ Each field has an offset, a size, an encoding, the evidence and a status:
 ## Sources
 
 - **Samples**: `samples/blackseq/` and its `MANIFEST.md`. Not supplied at this time.
+- **User manual**: Erica Synths "Black Sequencer user manual 3-2023 v2". It describes the
+  functions of the module, not the file. It is not in this repository.
 - **Reference code**: [black_seq_gui](https://github.com/ph1r3574r73r/black_seq_gui),
   commit `87fcea6` (2026-10-29). Files `blackseq/codec.py` (envelope, note, scale names),
   `blackseq/cardmap.py` (step and footer fields), `blackseq/midi_import.py` (gate values),
@@ -165,14 +167,18 @@ the card. The brief uses 1 to 16 in `ProjectFolder`, so `patternPath(1, 1)` woul
 | Q1 | H1 or H2: which bytes hold the note of step 1? | "One note changed on CH1 step 1" against `blank.SEQ`. H1 predicts a change at file offsets 46 to 49. H2 predicts 12 to 15. "CH1 step 16" and "64 steps with a note on step 64" must agree. |
 | Q2 | Is the note value MIDI note × 100, and which octave name does the module show for 6000? | The step 1 sample and the "two octaves higher" sample: the difference must be 2400. The manifest must give the note names that the module shows. |
 | Q3 | Is there a checksum, or other bytes that change when a note changes? | Each one-parameter sample: the diff must show only the bytes of that parameter. |
-| Q4 | Which byte is the gate length, and what is its range and unit? | "Gate length changed on CH1 step 1". The manifest must give the old and new values that the module shows. |
-| Q5 | How does the module store "gate off"? Gate length 0, note 0, or a different byte? | "Gate switched off on CH1 step 1". |
-| Q6 | Where is the track length, and what is file field 2 (value 16)? | The 8-step and 64-step samples. If field 2 changes also, it is not independent of the track length. |
+| Q4 | Which byte is the gate length, and what is its encoding? The manual gives settings 0 to 10 and a default of 50 % (page 8). The reference code stores setting × 10. | Patterns 6, 8 and 9 (gate length 80 %, 0 and 10). |
+| Q5 | How does the module store a muted step? The manual gives mute (push) and gate length 0 as two operations (page 8). | Pattern 7 (muted) against pattern 8 (gate length 0). |
+| Q5b | How does the module store a note that is longer than one step? The manual says that gate length 10 merges the step with the next one, and that a push of two encoders merges steps (page 8). | Pattern 9 (gate length 10) against pattern 10 (steps 1 and 2 merged). |
+| Q6 | Where is the last step of a track? Is file field 2 (value 16) the master track length of the manual (page 5)? Is there a first step field? | Patterns 11 and 12 (last step 8 and 64) and pattern 13 (master track length 32). |
 | Q7 | Do all channels use the same layout at a fixed distance of 2298 bytes? | "One note changed on CH2 step 1". |
 | Q8 | Is the file size always 9198 bytes? Does the length prefix rule hold? | All samples (a minimum of three). |
 | Q9 | Are the file and folder names as shown above? Which other files does a project hold? | The project folder copy. |
 | Q10 | What is the value of field 1 (5 in the fixtures) on Nate's firmware? | `blank.SEQ` and the firmware version in the manifest. The codec must refuse an unknown value. |
 | Q11 | Does a blank pattern from the module have gate length 50 and probability 10 on each step, as the fixture has? | `blank.SEQ`. |
 
-Possible additional sample, only if Q5 is not clear: a step with a tie or a note that is
-longer than one step, if the module has that function.
+The pattern numbers are the slots in `samples/blackseq/README.md`.
+
+The manual also says (page 8) that a step can be skipped (two fast pushes), and that the
+range of a track has a first step and a play direction (page 6). These are out of scope
+for version 1. Their bytes stay as the template has them.
