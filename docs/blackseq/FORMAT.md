@@ -20,7 +20,7 @@ the sample files on each build.
 ## Sources
 
 - **Samples**: `samples/blackseq/PROJECTS/RETEST/00/00.SEQ` to `13.SEQ`, saved by Nate on
-  2026-11-22. `NN.SEQ` is pattern NN + 1 of the procedure in `samples/blackseq/README.md`.
+  2026-11-22. Module firmware 1.06, bootloader 0.2. `NN.SEQ` is pattern NN + 1 of the procedure in `samples/blackseq/README.md`.
   In this document, "P1" to "P14" are those patterns.
 - **Factory project**: `samples/blackseq/PROJECTS/FACTORY/00/00.SEQ` to `06.SEQ`, from the
   same card. The module or Erica Synths made these files, but no manifest says what they
@@ -176,7 +176,6 @@ module did not make, and must `BANK.DAT` list the pattern? See Q5.
 | Q4 | **MIDI note number.** The file value 3600 is the note that the module shows as C-3. Which MIDI note number is that on the MIDI input and output of the module? The converter needs this. | Nate: send one known MIDI note to the module and read the note name, or tell which convention you want. Without a test, the converter uses value = MIDI note × 100 and reports the octave name that the module shows. |
 | Q5 | Does the module load a `.SEQ` file that a computer copied into a bank folder? | The phase 1 checkpoint (three generated files on a test card). |
 | Q6 | Merge of three or more steps: do all steps except the last one get bit 1? | A sample with steps 1 to 3 merged. Necessary only if the converter writes merged steps. |
-| Q7 | Firmware version of the module. `MANIFEST.md` is not completed. | Nate. |
 
 ## Decisions for the model, from these results
 
