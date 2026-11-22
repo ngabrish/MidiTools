@@ -1,0 +1,5 @@
+# Pattern files are binary. Git must never change their bytes.
+*.SEQ binary
+*.seq binary
+*.SNG binary
+*.DAT binary

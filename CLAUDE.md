@@ -1,0 +1,37 @@
+# midi-tools
+
+Java tools for MIDI and hardware sequencers. The first tool reads and writes pattern
+files for the Erica Synths Black Sequencer.
+
+## Layout
+
+```
+pom.xml            parent: Java level, JUnit version, module list
+core/              note model and MIDI file reader; no device knowledge
+blackseq-lib/      Black Sequencer model, .SEQ codec, converter, card writer
+blackseq-cli/      the blackseq command
+docs/blackseq/     FORMAT.md, the .SEQ format notes
+samples/blackseq/  pattern files that Nate saved on the module
+```
+
+Each module has its own `CLAUDE.md` with the rules for that module.
+`blackseq-gui/` and `bitwig-extension/` are planned. Do not create them now.
+
+## Build
+
+```bash
+mvn -B verify
+```
+
+Java 17 language level, Maven, JUnit 5. No runtime dependencies.
+
+## Rules for the full repository
+
+- Dependencies go in one direction: `blackseq-cli` -> `blackseq-lib` -> `core`.
+- `core` imports no `blackseq` package and knows nothing about a device.
+- The target platform is Windows first. Use `java.nio.file.Path` for all paths. CI runs
+  the tests on Windows and Linux.
+- Release tags have a module prefix, for example `blackseq-cli-v1.0`.
+- Work in phases. Stop at each checkpoint until Nate replies. The phase list is in
+  `blackseq-lib/CLAUDE.md`.
+- Only Nate can test on the module. Do not say that a file works on the module.
