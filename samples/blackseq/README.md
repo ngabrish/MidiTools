@@ -15,7 +15,7 @@ then push X.
 2. Push SETUP, turn DATA to the **Info** menu and push DATA. Write down the firmware
    version and the bootloader version (page 25).
 3. In the SETUP menu, open the **Default** settings (page 26). Turn DATA to select a
-   setting and turn step encoder 1 to change it. Set the factory values: default note C0,
+   setting and turn step encoder 1 to change it. Set the factory values: default note C-3 (the manual says C0),
    default gate length 50 %, gate state ON. These settings are the only module settings
    that change a blank pattern. Write down the values that the display shows.
 4. Make a new project (page 13): `SHIFT + PATTERN`, push DATA, turn DATA to **NEW**, enter
@@ -93,7 +93,7 @@ CH1 step 1 by one semitone, set it back to the default note, and save. Write in
 ## Copy the files
 
 1. Switch off the power of the case, then remove the SD card (page 27).
-2. Copy the full folder `PROJECTS/RETEST` to `samples/blackseq/project/RETEST`.
+2. Copy the full folder `PROJECTS/RETEST` to `samples/blackseq/PROJECTS/RETEST`.
    Do not rename files. Do not open them in an editor.
 3. If the card has a `SYSTEM` folder, copy it to `samples/blackseq/SYSTEM`.
 4. Write the list of files and folders in the root of the SD card in `MANIFEST.md`.
@@ -101,7 +101,7 @@ CH1 step 1 by one semitone, set it back to the default note, and save. Write in
 6. Commit the files to this repository, or attach a zip file of `samples/blackseq/` to
    the chat.
 
-Claude Code makes the named copies (`blank.SEQ` and so on) from the project folder.
+The files keep their names from the card. `NN.SEQ` is pattern NN + 1.
 
 ## Compare two samples
 
