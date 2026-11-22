@@ -7,8 +7,9 @@ Java tools for MIDI and hardware sequencers.
 A library and a command-line tool for the pattern files (`.SEQ`) of the Erica Synths
 Black Sequencer. This is not an Erica Synths product.
 
-**Status: phase 0 (format discovery).** The tool can only inspect files. It cannot write
-a pattern file. The format notes are in [docs/blackseq/FORMAT.md](docs/blackseq/FORMAT.md).
+**Status: phase 1 (codec).** The library reads and writes the note, the gate and the
+track length of a pattern file. The module has not confirmed the written files at this
+time. There is no MIDI conversion. The format notes are in [docs/blackseq/FORMAT.md](docs/blackseq/FORMAT.md).
 
 ### Build
 
@@ -28,9 +29,14 @@ java -jar blackseq-cli/target/blackseq.jar dump <file> [--offset <n>] [--length 
 java -jar blackseq-cli/target/blackseq.jar diff <a> <b>
 ```
 
+```bash
+java -jar blackseq-cli/target/blackseq.jar testfiles <dir>
+```
+
 `dump` shows a hex view with offsets. `diff` shows the byte ranges that are different
 between two files. The exit status of `diff` is 0 when the files are equal and 1 when
-they are different.
+they are different. `testfiles` writes three test patterns into a directory and replaces
+no file.
 
 ## Credits
 

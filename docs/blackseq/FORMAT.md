@@ -1,8 +1,8 @@
 # Black Sequencer `.SEQ` format
 
-Status of this document: **phase 0, sample set analysed.** All fields that version 1
-needs are confirmed by samples. No code in this repository
-writes a `.SEQ` file.
+Status of this document: **phase 1.** All fields that version 1 needs are confirmed by
+samples. `blackseq.format.SeqFile` reads and writes them. No test on the module has shown
+that the module accepts a file that this library made (Q5).
 
 ## Rules for this document
 
@@ -176,11 +176,30 @@ module did not make, and must `BANK.DAT` list the pattern? See Q5.
 
 | # | Question | What answers it |
 | --- | --- | --- |
-| Q4 | **MIDI note number.** The file value 3600 is the note that the module shows as C-3. Which MIDI note number is that on the MIDI input and output of the module? The converter needs this. | Nate: send one known MIDI note to the module and read the note name, or tell which convention you want. Without a test, the converter uses value = MIDI note × 100 and reports the octave name that the module shows. |
+| Q4 | **MIDI note number. Decided without a test (Nate, 2026-11-22): file value = MIDI note × 100, so MIDI note 36 is C-3. If a converted file plays in the wrong octave, change the default transpose.** Original question: the file value 3600 is the note that the module shows as C-3. Which MIDI note number is that on the MIDI input and output of the module? The converter needs this. | Nate: send one known MIDI note to the module and read the note name, or tell which convention you want. Without a test, the converter uses value = MIDI note × 100 and reports the octave name that the module shows. |
 | Q5 | Does the module load a `.SEQ` file that a computer copied into a bank folder? | The phase 1 checkpoint (three generated files on a test card). |
 | Q6 | Merge of three or more steps: do all steps except the last one get bit 1? | A sample with steps 1 to 3 merged. Necessary only if the converter writes merged steps. |
 
 ## Decisions for the model, from these results
+
+The codec (`SeqFile`) uses these rules:
+
+- **Constants are checked, not written.** `read` refuses a file whose size, header or
+  track framing is different from the samples, and a value that the model cannot hold
+  (note outside MIDI 0 to 127, gate length above 100, track length outside 2 to 64).
+- **A field is written only when its value changes.** `withPattern` compares each new
+  value with the value that the bytes decode to. So `file.withPattern(file.pattern())` is
+  equal to `file`, also for a file with a microtonal note that the model rounds.
+- **Additions to the API of the brief:** `SeqFile.fromBytes`, `masterTrackLength` and
+  `withMasterTrackLength`. Reason: the master track length is one value for the pattern,
+  outside the four tracks, and the samples confirm it. `Pattern` keeps the shape of the brief.
+- **`SeqFile.write` never replaces a file.** The replace-with-backup mode belongs to `card`.
+- **Not in the model at this time:** the merge bit. The codec keeps it from the template.
+  Phase 2 needs it for notes longer than one step; that needs a `Step` field and Q6.
+- **Note range.** The model accepts MIDI 0 to 127. The samples confirm 36 to 72 on the
+  module. The factory files have values up to 11400 (MIDI 114).
+
+Earlier notes:
 
 - `Step.midiNote` cannot be the storage unit: the file stores cents. The codec converts.
   The mapping from MIDI note number to cents waits for Q4.

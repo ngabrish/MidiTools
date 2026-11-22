@@ -2,16 +2,19 @@ package blackseq.cli;
 
 import blackseq.format.ByteDiff;
 import blackseq.format.HexDump;
+import blackseq.format.SeqFile;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.util.Map;
 
 /**
- * The {@code blackseq} command. Phase 0 has two commands, {@code dump} and {@code diff}.
- * The two commands only read files.
+ * The {@code blackseq} command. {@code dump} and {@code diff} only read files.
+ * {@code testfiles} writes new files into a directory that the user gives and replaces no file.
  */
 public final class Main {
 
@@ -29,6 +32,9 @@ public final class Main {
               blackseq diff <a> <b>
                   Changed byte ranges between two files.
                   Exit status: 0 = equal, 1 = different, 2 = error.
+              blackseq testfiles <dir>
+                  Write the three test patterns of the phase 1 checkpoint (00.SEQ, 01.SEQ,
+                  02.SEQ) into <dir>. The directory must exist. No file is replaced.
             """;
 
     private Main() {}
@@ -47,17 +53,21 @@ public final class Main {
             return switch (args[0]) {
                 case "dump" -> dump(args, out);
                 case "diff" -> diff(args, out);
+                case "testfiles" -> testFiles(args, out);
                 default -> throw new UsageException("Unknown command: " + args[0]);
             };
         } catch (UsageException e) {
             err.println(e.getMessage());
             err.print(USAGE);
             return EXIT_ERROR;
+        } catch (FileAlreadyExistsException e) {
+            err.println("File exists, not replaced: " + e.getFile());
+            return EXIT_ERROR;
         } catch (NoSuchFileException e) {
             err.println("File not found: " + e.getFile());
             return EXIT_ERROR;
         } catch (IOException e) {
-            err.println("Cannot read file: " + e);
+            err.println("File error: " + e);
             return EXIT_ERROR;
         }
     }
@@ -107,6 +117,29 @@ public final class Main {
         String report = ByteDiff.format(a, b);
         out.print(report);
         return ByteDiff.diff(a, b).isEmpty() ? EXIT_OK : EXIT_DIFFERENT;
+    }
+
+    private static int testFiles(String[] args, PrintStream out) throws IOException {
+        if (args.length != 2) {
+            throw new UsageException("testfiles takes one directory");
+        }
+        Path dir = path(args[1]);
+        if (!Files.isDirectory(dir)) {
+            throw new UsageException("Not a directory: " + dir);
+        }
+        Map<String, SeqFile> files = TestFiles.phase1();
+        // Check all names first, so that the command writes all three files or none.
+        for (String name : files.keySet()) {
+            if (Files.exists(dir.resolve(name))) {
+                throw new FileAlreadyExistsException(dir.resolve(name).toString());
+            }
+        }
+        for (Map.Entry<String, SeqFile> e : files.entrySet()) {
+            e.getValue().write(dir.resolve(e.getKey()));
+            out.println("Wrote " + dir.resolve(e.getKey()));
+            out.println("  " + TestFiles.DESCRIPTIONS.get(e.getKey()));
+        }
+        return EXIT_OK;
     }
 
     private static Path path(String text) {
