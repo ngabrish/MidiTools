@@ -55,19 +55,23 @@ All samples are in bank 1 of the project `RETEST`.
 | Pattern | Change from blank | Operation |
 | --- | --- | --- |
 | 1 | None | `SHIFT + RECORD` only. See "Blank patterns" below. |
-| 2 | CH1 step 1: note **C3** | CH1, CV. Hold SHIFT and turn step encoder 1 to change the octave. Release SHIFT to change the note (page 7). |
-| 3 | CH1 step 1: note **C5** | Same as pattern 2. |
-| 4 | CH1 step 16: note **D3** | CH1, CV, step encoder 16. |
-| 5 | CH2 step 1: note **E3** | CH2, CV, step encoder 1. |
+| 2 | CH1 step 1: note **1 octave up** | CH1, CV. Hold SHIFT and turn step encoder 1 clockwise until the octave number is 1 more than the default note (page 7). |
+| 3 | CH1 step 1: note **3 octaves up** | Same as pattern 2, until the octave number is 3 more than the default note. |
+| 4 | CH1 step 16: note **1 octave up, then D** | CH1, CV. SHIFT and step encoder 16 for the octave. Release SHIFT and turn clockwise to D in the same octave. |
+| 5 | CH2 step 1: note **1 octave up, then E** | CH2, CV, step encoder 1. Same method as pattern 4. |
 | 6 | CH1 step 1: gate length **80 %** (setting 8) | CH1, GATE. Turn step encoder 1 (page 8). |
 | 7 | CH1 step 1: **muted** | CH1, GATE. Push step encoder 1 one time (page 8). |
 | 8 | CH1 step 1: gate length **0** | CH1, GATE. Turn step encoder 1 fully counterclockwise. |
 | 9 | CH1 step 1: gate length **10** (full gate) | CH1, GATE. Turn step encoder 1 fully clockwise. |
 | 10 | CH1 steps 1 and 2: **merged** | CH1, GATE. Push step encoders 1 and 2 at the same time (page 8). |
 | 11 | CH1: last step **8** | CH1, DRCTN/RANGE. Push step encoder 8, or turn step encoder 2 (page 6). |
-| 12 | CH1: last step **64**, then step 64: note **F3** | CH1, DRCTN/RANGE, turn step encoder 2 to 64. Then CV, BAR> to bar 4, step encoder 16. |
+| 12 | CH1: last step **64**, then step 64: note **1 octave up, then F** | CH1, DRCTN/RANGE, turn step encoder 2 to 64. Then CV, BAR> to bar 4, step encoder 16. |
 | 13 | CH1: master track length **32** | CH1, SCALE. Turn step encoder 2 (page 5). |
 | 14 | None (control sample) | Same as pattern 1. |
+
+The notes are relative to the default note of the blank pattern. The default note on
+Nate's module is not the C0 of the manual, so a fixed note name can be equal to the blank
+value.
 
 Why there are more samples than in the brief:
 

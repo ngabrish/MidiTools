@@ -30,16 +30,16 @@ Status: **not completed.** Replace each `?` and delete this line.
 | Bank | Pattern | Change | Display before | Display after | Notes |
 | --- | --- | --- | --- | --- | --- |
 | 1 | 1 | None (blank) | n/a | n/a | |
-| 1 | 2 | CH1 step 1 note to C3 | ? | ? | |
-| 1 | 3 | CH1 step 1 note to C5 | ? | ? | |
-| 1 | 4 | CH1 step 16 note to D3 | ? | ? | |
-| 1 | 5 | CH2 step 1 note to E3 | ? | ? | |
+| 1 | 2 | CH1 step 1 note 1 octave up | ? | ? | |
+| 1 | 3 | CH1 step 1 note 3 octaves up | ? | ? | |
+| 1 | 4 | CH1 step 16 note 1 octave up, then to D | ? | ? | |
+| 1 | 5 | CH2 step 1 note 1 octave up, then to E | ? | ? | |
 | 1 | 6 | CH1 step 1 gate length to 80 % | ? | ? | |
 | 1 | 7 | CH1 step 1 muted (push) | ? | ? | |
 | 1 | 8 | CH1 step 1 gate length to 0 | ? | ? | |
 | 1 | 9 | CH1 step 1 gate length to 10 (full) | ? | ? | |
 | 1 | 10 | CH1 steps 1 and 2 merged | ? | ? | |
 | 1 | 11 | CH1 last step to 8 | ? | ? | |
-| 1 | 12 | CH1 last step to 64, step 64 note to F3 | ? | ? | |
+| 1 | 12 | CH1 last step to 64, step 64 note 1 octave up, then to F | ? | ? | |
 | 1 | 13 | CH1 master track length to 32 | ? | ? | |
 | 1 | 14 | None (blank, control) | n/a | n/a | |
