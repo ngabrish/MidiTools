@@ -1,0 +1,19 @@
+package blackseq.model;
+
+/**
+ * One step of a track.
+ *
+ * @param gateOn     false for a muted step: the step plays no gate
+ * @param midiNote   MIDI note number, 0 to 127. The module shows note 36 as C-3
+ * @param gateLength gate length as a fraction of the step, 0.0 to 1.0. 1.0 is a full gate
+ */
+public record Step(boolean gateOn, int midiNote, double gateLength) {
+    public Step {
+        if (midiNote < 0 || midiNote > 127) {
+            throw new IllegalArgumentException("midiNote must be 0 to 127: " + midiNote);
+        }
+        if (!(gateLength >= 0.0 && gateLength <= 1.0)) {
+            throw new IllegalArgumentException("gateLength must be 0.0 to 1.0: " + gateLength);
+        }
+    }
+}

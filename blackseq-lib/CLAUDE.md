@@ -29,6 +29,13 @@ A wrong byte can corrupt a pattern on the module. Accuracy is more important tha
   appear outside `format`.
 - **Small model first.** `Step` holds only gate, note and gate length. Add a field only
   after the samples confirm its bytes.
+- **Write only on change.** `SeqFile.withPattern` writes a field only when the new value
+  is different from the decoded value. Keep `file.withPattern(file.pattern())` equal to
+  `file`; a test checks this for each sample.
+- **One place for offsets.** `SeqLayout` holds each byte position. Add a position there
+  only when `FORMAT.md` gives it the status `confirmed by samples`.
+- **Bundled blank pattern.** `src/main/resources/blackseq/format/blank.SEQ` is a copy of
+  the sample `RETEST/00/00.SEQ`. A test checks that the two are equal.
 - **Signatures.** The public API in the brief is the intended shape. Change a signature
   only when the format work makes it necessary, and record the reason in `FORMAT.md`.
 - **No user-interface code** in this module.
