@@ -25,8 +25,8 @@ then push X.
 
 ## Procedure for each sample
 
-1. Push PATTERN and push the step encoder of the pattern slot (page 14). The LED of an
-   empty selected slot is green.
+1. Push PATTERN, then hold SHIFT and push the step encoder of the pattern slot (page 14).
+   With SHIFT, the change is immediate while the sequencer is stopped.
 2. Push CH1. Make sure that the pattern is blank: on the CV page all steps show the
    default note, and on the GATE page all steps show the default gate length.
 3. For the first sample only: `SHIFT + QUANT` (page 6). Write down the scale that the
@@ -36,7 +36,13 @@ then push X.
    starts to blink (page 5).
 5. Write down the value that the pop-up screen shows before and after the change.
 6. Save: `SHIFT + RECORD` (pages 5 and 13). The RECORD button stops blinking and the slot
-   LED becomes orange. An edit that is not saved is lost when you select a different
+   LED is on.
+7. Push BANK. The number in bank 1 is the quantity of saved patterns (page 14). It must be
+   one more than before.
+
+Slot LEDs: the manual gives green for "selected and empty", orange for "selected and
+saved" and red for "saved". Nate's module shows a lit LED for a saved slot and no light
+for an empty slot. Use the rule "LED on = saved" and the number on the BANK page. An edit that is not saved is lost when you select a different
    pattern.
 
 If the module does not let you do a step, do not find a different method. Write in
@@ -76,7 +82,7 @@ Why there are more samples than in the brief:
 ### Blank patterns
 
 For patterns 1 and 14, select the slot and do `SHIFT + RECORD` with no edit. If the slot
-LED stays green, the module did not save the pattern. In that case change the note of
+LED stays off, the module did not save the pattern. In that case change the note of
 CH1 step 1 by one semitone, set it back to the default note, and save. Write in
 `MANIFEST.md` which method you used.
 
