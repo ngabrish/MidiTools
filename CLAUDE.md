@@ -32,6 +32,8 @@ Java 17 language level, Maven, JUnit 5. No runtime dependencies.
 - The target platform is Windows first. Use `java.nio.file.Path` for all paths. CI runs
   the tests on Windows and Linux.
 - Release tags have a module prefix, for example `blackseq-cli-v1.0`.
+- Do not commit to `main`. Make each change on a branch and open a pull request. Merge a
+  pull request only when Nate tells you to.
 - Work in phases. Stop at each checkpoint until Nate replies. The phase list is in
   `blackseq-lib/CLAUDE.md`.
 - Only Nate can test on the module. Do not say that a file works on the module.
