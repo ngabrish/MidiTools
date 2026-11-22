@@ -44,11 +44,11 @@ Pattern p is the file `PROJECTS/RETEST/00/NN.SEQ` with NN = p − 1.
 | 1 | 4 | `03.SEQ` | CH1 step 16 note C-3 to D-4 | C-3 | D-4 | yes | | Shows the change |
 | 1 | 5 | `04.SEQ` | CH2 step 1 note C-3 to E-4 | | | yes | | Shows the change |
 | 1 | 6 | `05.SEQ` | CH1 step 1 gate length to 80 % | | | yes | | Shows the change |
-| 1 | 7 | `06.SEQ` | CH1 step 1 muted (push) | | | yes | Not sure this worked | **Equal to blank.** Do again |
+| 1 | 7 | `06.SEQ` | CH1 step 1 muted (push) | | | yes | Saved a second time | Shows the change |
 | 1 | 8 | `07.SEQ` | CH1 step 1 gate length to 0 | | | yes | | Shows the change |
-| 1 | 9 | `08.SEQ` | CH1 step 1 gate length to 10 (full) | | | yes | | **Holds 10 %, not the maximum.** Do again |
+| 1 | 9 | `08.SEQ` | CH1 step 1 gate length to 10 (full) | | | yes | Saved a second time at the maximum | Shows the change |
 | 1 | 10 | `09.SEQ` | CH1 steps 1 and 2 merged | | | yes | | Shows the change |
 | 1 | 11 | `10.SEQ` | CH1 last step to 8 | | | yes | | Shows the change |
-| 1 | 12 | `11.SEQ` | CH1 last step to 64, step 64 note C-3 to F-4 | | | yes | | Last step is 64. **No note changed.** Do again |
+| 1 | 12 | `11.SEQ` | CH1 last step to 64, step 64 note C-3 to F-4 | | | yes | Saved a second time | Shows the two changes |
 | 1 | 13 | `12.SEQ` | CH1 master track length to 32 | | | yes | | Shows the change |
 | 1 | 14 | `13.SEQ` | None (blank, control) | n/a | n/a | yes | | Equal to `00.SEQ` |

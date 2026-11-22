@@ -89,18 +89,28 @@ class SampleEvidenceTest {
     void gateLengthIsPercentAtStepOffsetFour() throws IOException {
         assertOneChange(5, 16, 80);
         assertOneChange(7, 16, 0);
-        assertOneChange(8, 16, 10);
+        assertOneChange(8, 16, 100);
     }
 
     @Test
-    void mergeSetsBitOneOfTheGateFlagsOfTheFirstStep() throws IOException {
-        assertOneChange(9, 22, 3);
+    void gateFlagsHoldMuteInBitZeroAndMergeInBitOne() throws IOException {
+        assertOneChange(6, 22, 0);   // step 1 muted
+        assertOneChange(9, 22, 3);   // steps 1 and 2 merged: only step 1 changes
     }
 
     @Test
     void lastStepIsInTheSecondFooterByte() throws IOException {
         assertOneChange(10, 12 + 2177, 7);
-        assertOneChange(11, 12 + 2177, 63);
+        assertEquals(63, sample(11)[12 + 2177]);
+    }
+
+    @Test
+    void stepSixtyFourNoteIsSixtyThreeStepsAfterStepOne() throws IOException {
+        List<ByteDiff.Range> ranges = ByteDiff.diff(sample(0), sample(11));
+        assertEquals(2, ranges.size());
+        assertEquals(12 + 34 * 63, ranges.get(0).offset());
+        assertArrayEquals(new byte[] {(byte) 0xb4, 0x14}, ranges.get(0).b());   // F-4 = 5300
+        assertEquals(12 + 2177, ranges.get(1).offset());
     }
 
     @Test
