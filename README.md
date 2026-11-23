@@ -37,7 +37,9 @@ java -jar blackseq.jar convert song.mid --project E:\PROJECTS\MYSONG --bank 1 --
   `BACKUP` folder of the project first.
 - `--dry-run` prints the result and writes nothing. With `--dry-run`, `--project` is not
   necessary.
-- Each note that is dropped, moved or shortened gives one warning line.
+- Each note that is dropped, moved or shortened gives one warning. The command prints
+  each warning if there are 10 or fewer. With more, it prints one count for each kind;
+  use `--verbose` to print each warning.
 - Other options: `--steps-per-beat`, `--transpose`, `--chords`, `--overflow`. Run the
   command with `--help` for the list.
 

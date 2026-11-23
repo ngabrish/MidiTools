@@ -227,6 +227,52 @@ class ConvertCommandTest {
         assertEquals(1, fileCount() - 3, "only the text file is new: the MIDI file, INFO.DAT and BANK.DAT were there");
     }
 
+    /** A MIDI file with 12 notes off the grid on track 1, and 3 chords of two notes on track 2. */
+    private void writeFileWithManyWarnings() throws Exception {
+        Sequence sequence = new Sequence(Sequence.PPQ, PPQ);
+        javax.sound.midi.Track played = sequence.createTrack();
+        for (int i = 0; i < 12; i++) {
+            note(played, 0, 60 + i, i * SIXTEENTH + 20, SIXTEENTH / 2);
+        }
+        javax.sound.midi.Track chords = sequence.createTrack();
+        for (int i = 0; i < 3; i++) {
+            note(chords, 1, 40, i * 4L * SIXTEENTH, SIXTEENTH);
+            note(chords, 1, 47, i * 4L * SIXTEENTH, SIXTEENTH);
+        }
+        MidiSystem.write(sequence, 1, midi.toFile());
+    }
+
+    @Test
+    void manyWarningsArePrintedAsCountsForEachKind() throws Exception {
+        writeFileWithManyWarnings();
+        assertEquals(Main.EXIT_OK, run("convert", midi.toString(), "--dry-run"), err());
+        assertTrue(out().contains("Result: 15 notes in 1 pattern, 3 dropped, 15 warnings\n"
+                + "     3 dropped (CH2: 3)\n"
+                + "    12 moved (CH1: 12)\n"
+                + "  Use --verbose to print each warning.\n"), out());
+        assertFalse(out().contains("Note 60 moved"), out());
+        assertTrue(out().contains("Pattern 1:"), "the pattern view is printed in the two modes");
+    }
+
+    @Test
+    void verbosePrintsEachWarning() throws Exception {
+        writeFileWithManyWarnings();
+        assertEquals(Main.EXIT_OK, run("convert", midi.toString(), "--dry-run", "--verbose"), err());
+        assertTrue(out().contains("CH1 beat 1.042: Note 60 moved: the note starts at step position 1.17 and goes to step 1."),
+                out());
+        assertTrue(out().contains("CH2 beat 3: Note 40 dropped"), out());
+        assertFalse(out().contains("Use --verbose"), out());
+        long lines = out().lines().filter(l -> l.contains(" moved: ") || l.contains(" dropped: ")).count();
+        assertEquals(15, lines);
+    }
+
+    @Test
+    void tenOrFewerWarningsArePrintedWithoutTheVerboseOption() throws Exception {
+        assertEquals(Main.EXIT_OK, run("convert", midi.toString(), "--dry-run"), err());
+        assertTrue(out().contains("CH2 beat 1: Note 36 dropped"), out());
+        assertFalse(out().contains("Use --verbose"), out());
+    }
+
     @Test
     void noteNamesAreTheNamesThatTheModuleShows() {
         assertEquals("C-3", ConvertCommand.noteName(36));

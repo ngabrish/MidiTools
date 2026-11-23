@@ -39,6 +39,8 @@ final class ConvertCommand {
                   --map <a,b,c,d>       MIDI clip numbers for CH1 to CH4, 0 for no clip.
                                         Default: the first four clips of the file.
                   --dry-run             Print the result and write nothing.
+                  --verbose             Print each warning. Without this option, more than
+                                        10 warnings are printed as one count for each kind.
                   --replace             Replace a pattern file that exists. The old file
                                         goes to the BACKUP folder of the project first.
                   --steps-per-beat <n>  Default 4: one step is a sixteenth note.
@@ -49,6 +51,10 @@ final class ConvertCommand {
 
     private static final String[] NOTE_NAMES = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
     private static final int LAST_PATTERN = 16;
+    /** With more warnings than this, the command prints counts unless --verbose is given. */
+    static final int MAX_WARNING_LINES = 10;
+    /** The kinds of warning, as the converter writes them at the start of a message. */
+    private static final String[] WARNING_KINDS = {"dropped", "moved", "shortened"};
 
     private ConvertCommand() {}
 
@@ -59,6 +65,7 @@ final class ConvertCommand {
         Integer pattern = null;
         int[] map = null;
         boolean dryRun = false;
+        boolean verbose = false;
         boolean replace = false;
         int stepsPerBeat = 4;
         int transpose = 0;
@@ -72,6 +79,7 @@ final class ConvertCommand {
                 case "--pattern" -> pattern = Main.number(args, ++i, "--pattern");
                 case "--map" -> map = map(value(args, ++i, "--map"));
                 case "--dry-run" -> dryRun = true;
+                case "--verbose" -> verbose = true;
                 case "--replace" -> replace = true;
                 case "--steps-per-beat" -> stepsPerBeat = Main.number(args, ++i, "--steps-per-beat");
                 case "--transpose" -> transpose = signed(value(args, ++i, "--transpose"), "--transpose");
@@ -146,8 +154,12 @@ final class ConvertCommand {
         out.println("Result: " + plan.assignments().size() + " notes in " + patterns.size()
                 + (patterns.size() == 1 ? " pattern, " : " patterns, ") + plan.dropped().size() + " dropped, "
                 + plan.warnings().size() + (plan.warnings().size() == 1 ? " warning" : " warnings"));
-        for (ConversionWarning w : plan.warnings()) {
-            out.printf(Locale.ROOT, "  CH%d beat %s: %s%n", w.channel(), trim(w.atBeats() + 1), w.message());
+        if (verbose || plan.warnings().size() <= MAX_WARNING_LINES) {
+            for (ConversionWarning w : plan.warnings()) {
+                out.printf(Locale.ROOT, "  CH%d beat %s: %s%n", w.channel(), trim(w.atBeats() + 1), w.message());
+            }
+        } else {
+            printWarningCounts(plan.warnings(), out);
         }
 
         // 3. Build the files. The master track length is the longest track of the pattern.
@@ -200,6 +212,36 @@ final class ConvertCommand {
             out.println("Wrote " + targets.get(i));
         }
         return Main.EXIT_OK;
+    }
+
+    /** One line for each kind of warning and for each channel that has warnings of that kind. */
+    private static void printWarningCounts(List<ConversionWarning> warnings, PrintStream out) {
+        int counted = 0;
+        for (String kind : WARNING_KINDS) {
+            int[] perChannel = new int[Pattern.CHANNELS + 1];
+            int total = 0;
+            for (ConversionWarning w : warnings) {
+                if (w.message().contains(" " + kind + ": ")) {
+                    perChannel[w.channel()]++;
+                    total++;
+                }
+            }
+            if (total > 0) {
+                StringBuilder channels = new StringBuilder();
+                for (int c = 1; c <= Pattern.CHANNELS; c++) {
+                    if (perChannel[c] > 0) {
+                        channels.append(channels.length() == 0 ? "" : ", ").append("CH").append(c).append(": ")
+                                .append(perChannel[c]);
+                    }
+                }
+                out.printf(Locale.ROOT, "  %4d %s (%s)%n", total, kind, channels);
+                counted += total;
+            }
+        }
+        if (counted < warnings.size()) {
+            out.printf(Locale.ROOT, "  %4d other%n", warnings.size() - counted);
+        }
+        out.println("  Use --verbose to print each warning.");
     }
 
     /** One line for a track: the steps that play, with the note names that the module shows. */

@@ -7,6 +7,10 @@ The `blackseq` command. Package `blackseq.cli`.
 - `convert` builds each file from `SeqFile.blank()`, and sets the master track length to
   the longest track of the pattern.
 - `convert` checks all target files before the first write: it writes all files or none.
+- `convert` prints more than 10 warnings as counts. It finds the kind of a warning from
+  the words `dropped:`, `moved:` and `shortened:` in the message. If the converter gets
+  a new kind of warning, add it to `WARNING_KINDS`; a warning of an unknown kind is
+  counted as "other".
 - `dump` and `diff` only read files. `testfiles` writes new files and replaces no file.
 - `samples/blackseq/generated/phase1/` holds the output of `testfiles`. A test checks that
   the committed files are equal to the generated files. Run `testfiles` into a new folder
