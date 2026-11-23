@@ -20,7 +20,8 @@ import miditools.core.note.NoteEvent;
  * between the two stages.
  *
  * <p>Each track is monophonic: one step holds one note. A note that is longer than one
- * step is shortened to one step, because this version does not write merged steps.
+ * step holds merged steps. It ends at the start of the next note of its channel and at the
+ * end of its pattern, because steps cannot be merged across two patterns.
  */
 public final class StepConverter {
 
@@ -37,6 +38,8 @@ public final class StepConverter {
      */
     static final double LONGEST_GATE = 0.99;
     private static final double SHORTEST_GATE = 0.01;
+    /** Gate length of a step that is merged with the next step. */
+    private static final double MERGED_GATE = LONGEST_GATE;
     /** Position difference, in steps, below which a note is on the grid. */
     private static final double GRID_TOLERANCE = 1e-6;
 
@@ -58,10 +61,10 @@ public final class StepConverter {
         List<NoteEvent> dropped = new ArrayList<>();
         List<ConversionWarning> warnings = new ArrayList<>();
         int[] channelSteps = new int[CHANNELS];
-        // Steps in use on the channels that have no clip, for ChordPolicy.SPREAD.
-        List<Set<Integer>> spreadUse = new ArrayList<>();
+        // For each channel: step index in the clip -> the note that starts there.
+        List<TreeMap<Integer, Placed>> starts = new ArrayList<>();
         for (int c = 0; c < CHANNELS; c++) {
-            spreadUse.add(new HashSet<>());
+            starts.add(new TreeMap<>());
         }
 
         for (int clipIndex = 0; clipIndex < clips.size(); clipIndex++) {
@@ -109,13 +112,13 @@ public final class StepConverter {
 
             for (List<Placed> onStep : byStep.values()) {
                 Placed winner = pick(onStep, options.chords());
-                assignments.add(assign(winner, channel, kept, warnings));
+                starts.get(channel - 1).put(winner.index(), winner);
                 List<Placed> others = new ArrayList<>(onStep);
                 others.remove(winner);
                 others.sort(Comparator.comparingInt((Placed p) -> p.note().midiNote()).reversed());
                 for (Placed other : others) {
                     int free = options.chords() == ChordPolicy.SPREAD
-                            ? freeChannel(clips.size(), spreadUse, other.index()) : 0;
+                            ? freeChannel(clips.size(), starts, other.index()) : 0;
                     if (free == 0) {
                         dropped.add(other.note());
                         warnings.add(warn(channel, other.note(), "dropped: step "
@@ -123,17 +126,22 @@ public final class StepConverter {
                                 + (options.chords() == ChordPolicy.SPREAD ? " and no channel is free"
                                 : " (chord policy " + options.chords() + ")")));
                     } else {
-                        spreadUse.get(free - 1).add(other.index());
+                        starts.get(free - 1).put(other.index(), other);
                         channelSteps[free - 1] = Math.max(channelSteps[free - 1], kept);
                         warnings.add(warn(channel, other.note(), "moved: chord note goes to CH" + free));
-                        assignments.add(assign(other, free, kept, warnings));
                     }
                 }
             }
         }
 
-        assignments.sort(Comparator.comparingInt(Assignment::channel)
-                .thenComparingInt(Assignment::pattern).thenComparingInt(Assignment::step));
+        // Second pass: the number of steps of each note, limited by the next note of the
+        // channel and by the end of the pattern.
+        for (int c = 0; c < CHANNELS; c++) {
+            TreeMap<Integer, Placed> channelStarts = starts.get(c);
+            for (Placed p : channelStarts.values()) {
+                assignments.add(assign(p, c + 1, channelSteps[c], channelStarts.higherKey(p.index()), warnings));
+            }
+        }
         List<Integer> steps = new ArrayList<>();
         for (int s : channelSteps) {
             steps.add(s);
@@ -149,11 +157,14 @@ public final class StepConverter {
         List<ConversionWarning> found = new ArrayList<>();
         Set<Long> used = new HashSet<>();
         for (Assignment a : plan.assignments()) {
-            long key = a.channel() * 1_000_000L + (long) a.pattern() * PATTERN_STEPS + a.step();
-            if (!used.add(key)) {
-                found.add(new ConversionWarning(a.channel(), a.note().startBeats(),
-                        "conflict: CH" + a.channel() + " pattern " + a.pattern() + " step " + a.step()
-                                + " has two notes"));
+            for (int step = a.step(); step <= a.lastStep(); step++) {
+                long key = a.channel() * 1_000_000L + (long) a.pattern() * PATTERN_STEPS + step;
+                if (!used.add(key)) {
+                    found.add(new ConversionWarning(a.channel(), a.note().startBeats(),
+                            "conflict: CH" + a.channel() + " pattern " + a.pattern() + " step " + step
+                                    + " has two notes"));
+                    break;
+                }
             }
             int pitch = a.note().midiNote() + plan.options().transpose();
             if (pitch < 0 || pitch > 127) {
@@ -206,9 +217,12 @@ public final class StepConverter {
                 Step[] notes = new Step[PATTERN_STEPS];
                 for (Assignment a : plan.assignments()) {
                     if (a.channel() == channel && a.pattern() == p) {
-                        notes[a.step() - 1] = new Step(true,
-                                a.note().midiNote() + plan.options().transpose(), a.gateLength());
-                        length = Math.max(length, a.step());
+                        int pitch = a.note().midiNote() + plan.options().transpose();
+                        for (int step = a.step(); step < a.lastStep(); step++) {
+                            notes[step - 1] = new Step(true, pitch, MERGED_GATE, true);
+                        }
+                        notes[a.lastStep() - 1] = new Step(true, pitch, a.gateLength(), false);
+                        length = Math.max(length, a.lastStep());
                     }
                 }
                 List<Step> steps = new ArrayList<>();
@@ -246,32 +260,47 @@ public final class StepConverter {
     }
 
     /** The first channel with no clip whose step is free, or 0. */
-    private static int freeChannel(int clipCount, List<Set<Integer>> spreadUse, int index) {
+    private static int freeChannel(int clipCount, List<TreeMap<Integer, Placed>> starts, int index) {
         for (int channel = clipCount + 1; channel <= CHANNELS; channel++) {
-            if (!spreadUse.get(channel - 1).contains(index)) {
+            if (!starts.get(channel - 1).containsKey(index)) {
                 return channel;
             }
         }
         return 0;
     }
 
-    private static Assignment assign(Placed p, int channel, int clipSteps, List<ConversionWarning> warnings) {
-        int sourceChannel = p.clip() + 1;
+    /**
+     * @param channelSteps total steps of the channel
+     * @param nextStart    step index of the next note of the channel, or null
+     */
+    private static Assignment assign(Placed p, int channel, int channelSteps, Integer nextStart,
+                                     List<ConversionWarning> warnings) {
         int stepInPattern = p.index() % PATTERN_STEPS;
+        int patternStart = p.index() - stepInPattern;
+        int patternEnd = Math.min(PATTERN_STEPS, channelSteps - patternStart);   // steps in this pattern
         double length = p.lengthSteps();
-        double gate;
-        if (length > 1.0 + GRID_TOLERANCE) {
-            gate = LONGEST_GATE;
-            int patternEnd = Math.min(PATTERN_STEPS, clipSteps - (p.index() - stepInPattern));
-            String reason = stepInPattern + length > patternEnd + GRID_TOLERANCE
-                    ? "it crosses the end of the pattern at step " + patternEnd
-                    : "this version does not write merged steps";
-            warnings.add(warn(sourceChannel, p.note(), String.format(Locale.ROOT,
-                    "shortened: the note is %.2f steps long and gets one step, because %s", length, reason)));
-        } else {
-            gate = Math.max(SHORTEST_GATE, Math.min(LONGEST_GATE, length));
+        int wanted = Math.max(1, (int) Math.ceil(length - GRID_TOLERANCE));
+
+        int limit = patternEnd - stepInPattern;
+        String reason = "it crosses the end of the pattern at step " + patternEnd;
+        if (nextStart != null && nextStart - p.index() < limit) {
+            limit = nextStart - p.index();
+            reason = "the next note starts at step " + (nextStart % PATTERN_STEPS + 1);
         }
-        return new Assignment(p.clip(), p.note(), channel, p.index() / PATTERN_STEPS, stepInPattern + 1, gate);
+
+        int steps;
+        double gate;
+        if (wanted > limit) {
+            steps = limit;
+            gate = LONGEST_GATE;
+            warnings.add(warn(p.clip() + 1, p.note(), String.format(Locale.ROOT,
+                    "shortened: the note is %.2f steps long and gets %d, because %s", length, steps, reason)));
+        } else {
+            steps = wanted;
+            gate = Math.max(SHORTEST_GATE, Math.min(LONGEST_GATE, length - (wanted - 1)));
+        }
+        return new Assignment(p.clip(), p.note(), channel, p.index() / PATTERN_STEPS, stepInPattern + 1,
+                steps, gate);
     }
 
     private static ConversionWarning warn(int channel, NoteEvent n, String text) {

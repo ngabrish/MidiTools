@@ -52,3 +52,4 @@ Pattern p is the file `PROJECTS/RETEST/00/NN.SEQ` with NN = p − 1.
 | 1 | 12 | `11.SEQ` | CH1 last step to 64, step 64 note C-3 to F-4 | | | yes | Saved a second time | Shows the two changes |
 | 1 | 13 | `12.SEQ` | CH1 master track length to 32 | | | yes | | Shows the change |
 | 1 | 14 | `13.SEQ` | None (blank, control) | n/a | n/a | yes | | Equal to `00.SEQ` |
+| 1 | 15 | `14.SEQ` | CH1 three steps merged (2026-11-23) | | | yes | "Ties the first 3 steps together" | Shows the change on steps 49 to 51 (bar 4), not on steps 1 to 3 |

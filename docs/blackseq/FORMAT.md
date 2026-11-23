@@ -20,7 +20,9 @@ the sample files on each build.
 
 ## Sources
 
-- **Samples**: `samples/blackseq/PROJECTS/RETEST/00/00.SEQ` to `13.SEQ`, saved by Nate on
+- **Samples**: `samples/blackseq/PROJECTS/RETEST/00/00.SEQ` to `14.SEQ`. `14.SEQ` (P15) is
+  from 2026-11-23: three merged steps. The intended steps were 1 to 3; the file has steps
+  49 to 51, which gives the same evidence. `00.SEQ` to `13.SEQ` were saved by Nate on
   2026-11-22. Nate saved P7, P9 and P12 a second time, because the first files did not
   show the intended change; the files in the repository are the second ones. Module firmware 1.06, bootloader 0.2. `NN.SEQ` is pattern NN + 1 of the procedure in `samples/blackseq/README.md`.
   In this document, "P1" to "P14" are those patterns.
@@ -54,6 +56,7 @@ Each line is the full output of `blackseq diff 00.SEQ NN.SEQ`.
 | P12 | CH1 last step to 64, step 64 note to F-4 | 2154..2155 and 2189 | `10 0e` (3600) and `0f` (15) | `b4 14` (5300) and `3f` (63) |
 | P13 | CH1 master track length to 32 | 5 | `10` (16) | `20` (32) |
 | P14 | None (second blank) | none | | |
+| P15 | CH1 steps 49 to 51 merged | 1654 and 1688 | `01` and `01` | `03` and `03` |
 
 An earlier file for P9 had gate length 10 %: file offset 16 was `0a` (10). That file is
 not in the repository now, but it is one more data point for the percent encoding.
@@ -110,7 +113,7 @@ Offsets are in the 34-byte step.
 | 7 | 1 | bits | Repeat count − 1, bit 7 = merge | 0 | `cardmap.py` | reference code only |
 | 8 | 1 | uint8 | Glide | 0 | `cardmap.py` | reference code only |
 | 9 | 1 | uint8 | Probability code, 10 = always | 10 | `cardmap.py` | reference code only |
-| 10 | 1 | bits | **Gate flags.** Bit 0 = gate on (0 = muted step). Bit 1 = merged with the next step | 1 | P7 (0), P10 (3 on step 1, step 2 stays 1) | confirmed by samples |
+| 10 | 1 | bits | **Gate flags.** Bit 0 = gate on (0 = muted step). Bit 1 = merged with the next step: in a group of merged steps, each step except the last one has it | 1 | P7 (0), P10 (3 on step 1, step 2 stays 1), P15 (3 on steps 49 and 50, step 51 stays 1) | confirmed by samples |
 | 11 | 1 | | | 0 | none | unknown |
 | 12 | 2 | int16 | Micro-timing | 0 | `cardmap.py` | reference code only |
 | 14 | 1 | | | 0 | none | unknown |
@@ -188,7 +191,6 @@ It does not cover muted steps, gate lengths other than 50 %, or channels CH2 to 
 | # | Question | What answers it |
 | --- | --- | --- |
 | Q4 | **MIDI note number. Decided without a test (Nate, 2026-11-22): file value = MIDI note × 100, so MIDI note 36 is C-3. If a converted file plays in the wrong octave, change the default transpose.** Original question: the file value 3600 is the note that the module shows as C-3. Which MIDI note number is that on the MIDI input and output of the module? The converter needs this. | Nate: send one known MIDI note to the module and read the note name, or tell which convention you want. Without a test, the converter uses value = MIDI note × 100 and reports the octave name that the module shows. |
-| Q6 | Merge of three or more steps: do all steps except the last one get bit 1? The factory file `FACTORY/00/00.SEQ` has CH1 steps 1 to 3 with gate flags 3 and step 4 with gate flags 1, which agrees. That is supporting evidence, not proof. | A sample with steps 1 to 3 merged. Necessary before the converter writes notes longer than one step. |
 
 ## Decisions for the model, from these results
 
@@ -204,8 +206,11 @@ The codec (`SeqFile`) uses these rules:
   `withMasterTrackLength`. Reason: the master track length is one value for the pattern,
   outside the four tracks, and the samples confirm it. `Pattern` keeps the shape of the brief.
 - **`SeqFile.write` never replaces a file.** The replace-with-backup mode belongs to `card`.
-- **Not in the model at this time:** the merge bit. The codec keeps it from the template.
-  Phase 2 needs it for notes longer than one step; that needs a `Step` field and Q6.
+- **`Step.mergeNext`** holds the merge bit (P10, P15). The brief has no such field; a note
+  that is longer than one step needs it. The meaning of the merge bit on the last step of
+  a track is not known, and the converter never sets it there. The gate length of a
+  merged step is 50 % in the samples, because the merge does not change it. The converter
+  writes 99 % on merged steps; the effect of that value on the module is not tested.
 - **Note range.** The model accepts MIDI 0 to 127. The samples confirm 36 to 72 on the
   module. The factory files have values up to 11400 (MIDI 114).
 

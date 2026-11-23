@@ -120,15 +120,51 @@ class StepConverterTest {
     }
 
     @Test
-    void noteLongerThanOneStepIsShortenedWithAWarning() {
-        NoteEvent halfNote = new NoteEvent(0, 2.0, 60, 100);
-        ConversionPlan plan = converter.plan(List.of(clip(4, halfNote)), ConversionOptions.defaults());
-        assertEquals(StepConverter.LONGEST_GATE, plan.assignments().get(0).gateLength());
+    void noteLongerThanOneStepHoldsMergedSteps() {
+        NoteEvent halfNote = new NoteEvent(0, 2.0, 60, 100);                       // 8 steps
+        NoteEvent twoAndAHalf = new NoteEvent(2.0, 2.5 * SIXTEENTH, 62, 100);      // steps 9 to 11
+        ConversionPlan plan = converter.plan(List.of(clip(4, halfNote, twoAndAHalf)), ConversionOptions.defaults());
+        assertEquals(new Assignment(0, halfNote, 1, 0, 1, 8, StepConverter.LONGEST_GATE), plan.assignments().get(0));
+        assertEquals(new Assignment(0, twoAndAHalf, 1, 0, 9, 3, 0.5), plan.assignments().get(1));
+        assertTrue(plan.warnings().isEmpty(), "a note that keeps its length gives no warning");
+
+        Track ch1 = converter.apply(plan).get(0).tracks().get(0);
+        for (int s = 0; s < 7; s++) {
+            assertEquals(new Step(true, 60, StepConverter.LONGEST_GATE, true), ch1.steps().get(s), "step " + (s + 1));
+        }
+        assertEquals(new Step(true, 60, StepConverter.LONGEST_GATE, false), ch1.steps().get(7));
+        assertEquals(new Step(true, 62, StepConverter.LONGEST_GATE, true), ch1.steps().get(8));
+        assertEquals(new Step(true, 62, StepConverter.LONGEST_GATE, true), ch1.steps().get(9));
+        assertEquals(new Step(true, 62, 0.5, false), ch1.steps().get(10));
+        assertEquals(new Step(false, 62, 0.5, false), ch1.steps().get(11));
+    }
+
+    @Test
+    void longNoteEndsWhereTheNextNoteStartsWithAWarning() {
+        NoteEvent longNote = new NoteEvent(0, 4 * SIXTEENTH, 60, 100);     // wants steps 1 to 4
+        NoteEvent next = at(3, 64);
+        ConversionPlan plan = converter.plan(List.of(clip(4, longNote, next)), ConversionOptions.defaults());
+        assertEquals(new Assignment(0, longNote, 1, 0, 1, 2, StepConverter.LONGEST_GATE), plan.assignments().get(0));
         assertEquals(1, plan.warnings().size());
-        assertTrue(plan.warnings().get(0).message().contains("shortened"), plan.warnings().get(0).message());
-        assertTrue(plan.warnings().get(0).message().contains("8.00 steps"));
+        assertEquals("Note 60 shortened: the note is 4.00 steps long and gets 2, because the next note starts at step 3.",
+                plan.warnings().get(0).message());
         assertEquals(1, plan.warnings().get(0).channel());
         assertEquals(0.0, plan.warnings().get(0).atBeats());
+
+        Track ch1 = converter.apply(plan).get(0).tracks().get(0);
+        assertTrue(ch1.steps().get(0).mergeNext());
+        assertFalse(ch1.steps().get(1).mergeNext(), "the last step of a note is not merged with the next note");
+        assertEquals(new Step(true, 64, 0.5, false), ch1.steps().get(2));
+    }
+
+    @Test
+    void noteThatEndsExactlyAtTheNextNoteIsNotShortened() {
+        NoteEvent first = new NoteEvent(0, 2 * SIXTEENTH, 60, 100);
+        NoteEvent second = new NoteEvent(2 * SIXTEENTH, 2 * SIXTEENTH, 62, 100);
+        ConversionPlan plan = converter.plan(List.of(clip(1, first, second)), ConversionOptions.defaults());
+        assertEquals(2, plan.assignments().get(0).steps());
+        assertEquals(2, plan.assignments().get(1).steps());
+        assertTrue(plan.warnings().isEmpty());
     }
 
     // ----- notes off the grid -----
@@ -229,9 +265,11 @@ class StepConverterTest {
     void noteThatCrossesThePatternEndIsShortenedWithAWarning() {
         NoteEvent overTheEnd = new NoteEvent(63 * SIXTEENTH, 4 * SIXTEENTH, 60, 100);   // steps 64 to 67
         ConversionPlan plan = converter.plan(List.of(clip(32, overTheEnd)), ConversionOptions.defaults());
-        assertEquals(new Assignment(0, overTheEnd, 1, 0, 64, StepConverter.LONGEST_GATE),
+        assertEquals(new Assignment(0, overTheEnd, 1, 0, 64, 1, StepConverter.LONGEST_GATE),
                 plan.assignments().get(0));
         assertEquals(1, plan.warnings().size());
+        assertFalse(converter.apply(plan).get(0).tracks().get(0).steps().get(63).mergeNext(),
+                "step 64 is never merged with a next step");
         assertTrue(plan.warnings().get(0).message().contains("crosses the end of the pattern at step 64"),
                 plan.warnings().get(0).message());
     }
@@ -365,6 +403,16 @@ class StepConverterTest {
     }
 
     @Test
+    void longNoteThatCoversTheStepOfAnotherNoteIsAConflict() {
+        ConversionPlan plan = converter.plan(List.of(clip(4, at(1, 60), at(3, 62))), ConversionOptions.defaults());
+        ConversionPlan conflict = plan.withAssignment(0, new Assignment(0, at(1, 60), 1, 0, 1, 4, 0.5));
+        List<ConversionWarning> found = converter.validate(conflict);
+        assertEquals(1, found.size());
+        assertTrue(found.get(0).message().contains("CH1 pattern 0 step 3 has two notes"), found.get(0).message());
+        assertThrows(ConversionException.class, () -> converter.apply(conflict));
+    }
+
+    @Test
     void recordsRejectValuesOutsideTheirRange() {
         NoteEvent n = at(1, 60);
         assertThrows(IllegalArgumentException.class, () -> new Assignment(0, n, 0, 0, 1, 0.5));
@@ -373,6 +421,9 @@ class StepConverterTest {
         assertThrows(IllegalArgumentException.class, () -> new Assignment(0, n, 1, 0, 65, 0.5));
         assertThrows(IllegalArgumentException.class, () -> new Assignment(0, n, 1, 0, 1, 0.0));
         assertThrows(IllegalArgumentException.class, () -> new Assignment(0, n, 1, 0, 1, 1.5));
+        assertThrows(IllegalArgumentException.class, () -> new Assignment(0, n, 1, 0, 1, 0, 0.5));
+        assertThrows(IllegalArgumentException.class, () -> new Assignment(0, n, 1, 0, 60, 6, 0.5));
+        assertEquals(64, new Assignment(0, n, 1, 0, 60, 5, 0.5).lastStep());
         assertThrows(IllegalArgumentException.class,
                 () -> new ConversionOptions(0, ChordPolicy.HIGHEST, OverflowPolicy.SPLIT, 0));
     }
