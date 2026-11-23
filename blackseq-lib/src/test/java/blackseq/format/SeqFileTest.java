@@ -62,6 +62,10 @@ class SeqFileTest {
         return s -> new Step(s.gateOn(), s.midiNote(), fraction);
     }
 
+    private static UnaryOperator<Step> merged() {
+        return s -> new Step(s.gateOn(), s.midiNote(), s.gateLength(), true);
+    }
+
     private static void assertSameBytes(int fileNumber, SeqFile made) throws IOException {
         assertArrayEquals(Files.readAllBytes(sample(fileNumber)), made.toBytes(),
                 "bytes of sample " + fileNumber);
@@ -72,7 +76,7 @@ class SeqFileTest {
     @Test
     void eachModuleFileReadsAndWritesBackByteForByte() throws Exception {
         List<Path> files = allModuleFiles();
-        assertEquals(21, files.size(), "14 RETEST files and 7 FACTORY files");
+        assertEquals(22, files.size(), "15 RETEST files and 7 FACTORY files");
         for (Path f : files) {
             byte[] original = Files.readAllBytes(f);
             SeqFile file = SeqFile.read(f);
@@ -127,6 +131,16 @@ class SeqFileTest {
     }
 
     @Test
+    void blankWithMergedStepsIsEqualToTheMergeSamples() throws Exception {
+        SeqFile blank = SeqFile.blank();
+        Pattern p = blank.pattern();
+        // Steps 1 and 2 merged: only step 1 has the merge bit.
+        assertSameBytes(9, blank.withPattern(withStep(p, 1, 1, merged())));
+        // Steps 49 to 51 merged: steps 49 and 50 have the merge bit.
+        assertSameBytes(14, blank.withPattern(withStep(withStep(p, 1, 49, merged()), 1, 50, merged())));
+    }
+
+    @Test
     void blankWithATrackLengthIsEqualToTheLengthSamples() throws Exception {
         SeqFile blank = SeqFile.blank();
         Pattern p = blank.pattern();
@@ -170,13 +184,18 @@ class SeqFileTest {
         assertEquals(64, long64.length());
         assertEquals(53, long64.steps().get(63).midiNote());
         assertEquals(32, SeqFile.read(sample(12)).masterTrackLength());
+        List<Step> merged3 = SeqFile.read(sample(14)).pattern().tracks().get(0).steps();
+        assertFalse(merged3.get(47).mergeNext());
+        assertTrue(merged3.get(48).mergeNext());
+        assertTrue(merged3.get(49).mergeNext());
+        assertFalse(merged3.get(50).mergeNext());
     }
 
     // ----- unknown bytes stay -----
 
     @Test
-    void aChangeKeepsTheMergeBitAndAllOtherBytes() throws Exception {
-        SeqFile merged = SeqFile.read(sample(9));       // steps 1 and 2 merged: the model has no field
+    void aChangeToOneStepKeepsTheMergeBitOfAnotherStepAndAllOtherBytes() throws Exception {
+        SeqFile merged = SeqFile.read(sample(9));       // steps 1 and 2 merged
         byte[] before = merged.toBytes();
         byte[] after = merged.withPattern(withStep(merged.pattern(), 1, 2, note(60))).toBytes();
         List<ByteDiff.Range> ranges = ByteDiff.diff(before, after);

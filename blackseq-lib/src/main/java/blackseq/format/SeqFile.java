@@ -7,6 +7,7 @@ import static blackseq.format.SeqLayout.FIRST_TRACK;
 import static blackseq.format.SeqLayout.GATE_ON_BIT;
 import static blackseq.format.SeqLayout.MASTER_TRACK_LENGTH;
 import static blackseq.format.SeqLayout.MAX_NOTE_CENTS;
+import static blackseq.format.SeqLayout.MERGE_NEXT_BIT;
 import static blackseq.format.SeqLayout.STEP_COUNT;
 import static blackseq.format.SeqLayout.STEP_GATE_FLAGS;
 import static blackseq.format.SeqLayout.STEP_GATE_LENGTH;
@@ -155,7 +156,8 @@ public final class SeqFile {
         return new Step(
                 (u8(offset + STEP_GATE_FLAGS) & GATE_ON_BIT) != 0,
                 centsToMidi(i32(bytes, offset + STEP_NOTE)),
-                u8(offset + STEP_GATE_LENGTH) / 100.0);
+                u8(offset + STEP_GATE_LENGTH) / 100.0,
+                (u8(offset + STEP_GATE_FLAGS) & MERGE_NEXT_BIT) != 0);
     }
 
     private static void encodeStep(byte[] out, int offset, Step oldStep, Step newStep) {
@@ -170,10 +172,16 @@ public final class SeqFile {
             out[offset + STEP_GATE_LENGTH] = (byte) percent(newStep.gateLength());
         }
         if (newStep.gateOn() != oldStep.gateOn()) {
-            int flags = out[offset + STEP_GATE_FLAGS] & 0xFF;
-            out[offset + STEP_GATE_FLAGS] =
-                    (byte) (newStep.gateOn() ? flags | GATE_ON_BIT : flags & ~GATE_ON_BIT);
+            setBit(out, offset + STEP_GATE_FLAGS, GATE_ON_BIT, newStep.gateOn());
         }
+        if (newStep.mergeNext() != oldStep.mergeNext()) {
+            setBit(out, offset + STEP_GATE_FLAGS, MERGE_NEXT_BIT, newStep.mergeNext());
+        }
+    }
+
+    private static void setBit(byte[] out, int offset, int bit, boolean on) {
+        int value = out[offset] & 0xFF;
+        out[offset] = (byte) (on ? value | bit : value & ~bit);
     }
 
     private static int percent(double gateLength) {

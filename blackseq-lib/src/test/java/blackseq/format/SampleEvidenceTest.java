@@ -99,6 +99,18 @@ class SampleEvidenceTest {
     }
 
     @Test
+    void mergeOfThreeStepsSetsBitOneOnAllStepsExceptTheLast() throws IOException {
+        // 14.SEQ: CH1 steps 49 to 51 merged.
+        List<ByteDiff.Range> ranges = ByteDiff.diff(sample(0), sample(14));
+        assertEquals(2, ranges.size());
+        assertEquals(12 + 34 * 48 + 10, ranges.get(0).offset());
+        assertEquals(12 + 34 * 49 + 10, ranges.get(1).offset());
+        assertArrayEquals(new byte[] {3}, ranges.get(0).b());
+        assertArrayEquals(new byte[] {3}, ranges.get(1).b());
+        assertEquals(1, sample(14)[12 + 34 * 50 + 10], "the last merged step keeps gate flags 1");
+    }
+
+    @Test
     void lastStepIsInTheSecondFooterByte() throws IOException {
         assertOneChange(10, 12 + 2177, 7);
         assertEquals(63, sample(11)[12 + 2177]);

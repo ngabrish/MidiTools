@@ -3,7 +3,8 @@
 `blackseq testfiles` made these files from the bundled blank pattern. They are not samples
 from the module. A test makes sure that they are equal to what the code generates.
 
-Only a test on the module can show if the module accepts them.
+**Result:** Nate tested the three files on the module on 2026-11-23 (firmware 1.06). All
+three patterns loaded and played correctly.
 
 | File | Slot | Content |
 | --- | --- | --- |

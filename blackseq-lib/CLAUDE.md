@@ -40,6 +40,31 @@ A wrong byte can corrupt a pattern on the module. Accuracy is more important tha
   only when the format work makes it necessary, and record the reason in `FORMAT.md`.
 - **No user-interface code** in this module.
 
+## Converter rules
+
+- `plan()` decides, `apply()` builds. Put no placement logic in `apply()` and none in a
+  user interface.
+- Each dropped, moved or shortened note gets one warning. A test checks this for each case.
+- A note that is longer than one step holds merged steps. It ends at the next note of its
+  channel and at the end of its pattern. The last step of a note is never merged with
+  the next step.
+- A note that fills its step gets gate length 0.99, not 1.0. A full gate joins the step
+  to the next one, and then a repeated note does not start again.
+- A step with no note is a muted step with the note of the step before it.
+
+## Differences from the brief
+
+Record each change to a signature of the brief here, with the reason.
+
+| Change | Reason |
+| --- | --- |
+| `SeqFile.fromBytes`, `masterTrackLength`, `withMasterTrackLength` added | The master track length is one value for the pattern, outside the four tracks |
+| `ConversionPlan` has the field `channelSteps` | `apply()` needs the length of each clip. Without it, the steps with no note at the end of a clip are lost |
+| `Step` has the field `mergeNext` | A note that is longer than one step needs merged steps. Samples P10 and P15 confirm the bit |
+| `Assignment` has the field `steps` | The number of steps that a note holds. `gateLength` is the gate of the last step |
+| `ConversionException` added | `OverflowPolicy.FAIL` and a plan conflict need an exception type |
+| `ConversionOptions.defaults()` added | One place for the default values of the CLI and a later user interface |
+
 ## Card safety
 
 - Write only inside a directory that the user gives on the command line.

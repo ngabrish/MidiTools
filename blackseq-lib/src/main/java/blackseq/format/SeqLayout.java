@@ -24,9 +24,10 @@ final class SeqLayout {
     static final int STEP_NOTE = 0;
     /** uint8, percent, 0 to 100. */
     static final int STEP_GATE_LENGTH = 4;
-    /** Bit 0 = gate on. Bit 1 = merged with the next step (read only at this time). */
+    /** Bit 0 = gate on. Bit 1 = merged with the next step. */
     static final int STEP_GATE_FLAGS = 10;
     static final int GATE_ON_BIT = 0x01;
+    static final int MERGE_NEXT_BIT = 0x02;
 
     static final int FOOTER = STEP_SIZE * STEP_COUNT;
     /** uint8, last step minus 1. */
