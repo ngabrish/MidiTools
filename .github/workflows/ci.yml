@@ -22,3 +22,10 @@ jobs:
           java-version: '17'
           cache: maven
       - run: mvn -B verify
+      # The runnable command, for use on a computer that has Java but no Maven.
+      - uses: actions/upload-artifact@v4
+        if: matrix.os == 'ubuntu-latest'
+        with:
+          name: blackseq-jar
+          path: blackseq-cli/target/blackseq.jar
+          if-no-files-found: error

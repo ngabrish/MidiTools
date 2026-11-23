@@ -214,6 +214,17 @@ The codec (`SeqFile`) uses these rules:
 - **Note range.** The model accepts MIDI 0 to 127. The samples confirm 36 to 72 on the
   module. The factory files have values up to 11400 (MIDI 114).
 
+Rules of the `convert` command that touch the format:
+
+- Each pattern file starts from the bundled blank pattern. A channel with no clip is
+  muted on all its steps.
+- The master track length is set to the longest track of the pattern.
+- `ProjectFolder` writes no `INFO.DAT` and no `BANK.DAT`. The two `BANK.DAT` files of
+  `RETEST` (bank 1 with 14 patterns, bank 2 with none) are equal, so the module finds
+  patterns by their files, not by a list in `BANK.DAT`.
+- With `--replace`, the old file goes to the folder `BACKUP` in the project folder. The
+  behaviour of the module with this extra folder is not tested.
+
 Earlier notes:
 
 - `Step.midiNote` cannot be the storage unit: the file stores cents. The codec converts.

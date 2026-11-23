@@ -71,6 +71,12 @@ Record each change to a signature of the brief here, with the reason.
 - The default write mode is `FAIL_IF_EXISTS`.
 - `BACKUP_THEN_REPLACE` copies the old file to a `backup/` folder first.
 - Never delete files.
+- `ProjectFolder` opens only a folder with `INFO.DAT`, and writes only into a bank folder
+  with `BANK.DAT`. The module makes these files. The library never makes them, because
+  their content is not known.
+- A write is read back and compared.
+- Backups go to `<project>/BACKUP/` with names of 8 characters, for example
+  `0003_001.SEQ` (bank folder 00, pattern file 03, copy 1). A backup is never replaced.
 
 ## Reference code
 

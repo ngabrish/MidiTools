@@ -7,9 +7,10 @@ Java tools for MIDI and hardware sequencers.
 A library and a command-line tool for the pattern files (`.SEQ`) of the Erica Synths
 Black Sequencer. This is not an Erica Synths product.
 
-**Status: phase 1 (codec).** The library reads and writes the note, the gate and the
-track length of a pattern file. The module has not confirmed the written files at this
-time. There is no MIDI conversion. The format notes are in [docs/blackseq/FORMAT.md](docs/blackseq/FORMAT.md).
+**Status: phase 3 (MIDI conversion).** The library reads and writes the note, the gate,
+merged steps and the track length of a pattern file, and converts a MIDI file to
+patterns. Three generated test files loaded and played correctly on the module. A
+converted MIDI file has not been tested on the module at this time. The format notes are in [docs/blackseq/FORMAT.md](docs/blackseq/FORMAT.md).
 
 ### Build
 
@@ -21,22 +22,42 @@ mvn -B verify
 
 ### Use
 
+Convert a MIDI file to pattern files in a project folder on the SD card:
+
 ```bash
-java -jar blackseq-cli/target/blackseq.jar dump <file> [--offset <n>] [--length <n>]
+java -jar blackseq.jar convert song.mid --project E:\PROJECTS\MYSONG --bank 1 --pattern 1
+```
+
+- The project folder must be one that the module made. Select the bank on the module one
+  time before the first conversion into it.
+- The first four clips of the MIDI file go to CH1 to CH4. A clip is one track and MIDI
+  channel that has notes. Use `--map 2,1,0,3` to select clips; 0 means no clip.
+- One step is a sixteenth note. A file longer than 64 steps goes into the next patterns.
+- The command replaces no file. With `--replace`, the old pattern file goes to the
+  `BACKUP` folder of the project first.
+- `--dry-run` prints the result and writes nothing. With `--dry-run`, `--project` is not
+  necessary.
+- Each note that is dropped, moved or shortened gives one warning line.
+- Other options: `--steps-per-beat`, `--transpose`, `--chords`, `--overflow`. Run the
+  command with `--help` for the list.
+
+MIDI note 36 is the note that the module shows as `C-3`.
+
+Format tools:
+
+```bash
+java -jar blackseq.jar dump <file> [--offset <n>] [--length <n>]
 ```
 
 ```bash
-java -jar blackseq-cli/target/blackseq.jar diff <a> <b>
-```
-
-```bash
-java -jar blackseq-cli/target/blackseq.jar testfiles <dir>
+java -jar blackseq.jar diff <a> <b>
 ```
 
 `dump` shows a hex view with offsets. `diff` shows the byte ranges that are different
-between two files. The exit status of `diff` is 0 when the files are equal and 1 when
-they are different. `testfiles` writes three test patterns into a directory and replaces
-no file.
+between two files.
+
+After a build, the file is `blackseq-cli/target/blackseq.jar`. Each CI run on GitHub also
+has it as the artifact `blackseq-jar`.
 
 ## Credits
 

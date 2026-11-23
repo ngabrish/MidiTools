@@ -2,9 +2,11 @@
 
 The `blackseq` command. Package `blackseq.cli`.
 
-- Commands now: `dump`, `diff`, `testfiles` (phase 1 checkpoint files). Later: `convert`
-  (phase 3).
+- Commands: `dump`, `diff`, `testfiles` (phase 1 checkpoint files) and `convert`.
 - No conversion logic and no byte offsets here. Call `blackseq-lib`.
+- `convert` builds each file from `SeqFile.blank()`, and sets the master track length to
+  the longest track of the pattern.
+- `convert` checks all target files before the first write: it writes all files or none.
 - `dump` and `diff` only read files. `testfiles` writes new files and replaces no file.
 - `samples/blackseq/generated/phase1/` holds the output of `testfiles`. A test checks that
   the committed files are equal to the generated files. Run `testfiles` into a new folder
