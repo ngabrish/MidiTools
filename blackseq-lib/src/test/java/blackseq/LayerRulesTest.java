@@ -45,6 +45,13 @@ class LayerRulesTest {
     }
 
     @Test
+    void cardDependsOnFormatOnly() throws IOException {
+        assertNoImport(MAIN.resolve("card"), "blackseq.convert");
+        assertNoImport(MAIN.resolve("card"), "blackseq.model");
+        assertNoImport(MAIN.resolve("card"), "miditools.");
+    }
+
+    @Test
     void coreDoesNotImportBlackseq() throws IOException {
         assertNoImport(CORE, "blackseq");
     }

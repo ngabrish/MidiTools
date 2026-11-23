@@ -14,7 +14,8 @@ import java.util.Map;
 
 /**
  * The {@code blackseq} command. {@code dump} and {@code diff} only read files.
- * {@code testfiles} writes new files into a directory that the user gives and replaces no file.
+ * {@code testfiles} and {@code convert} write only into a directory that the user gives.
+ * They replace no file, except {@code convert} with the option {@code --replace}.
  */
 public final class Main {
 
@@ -35,7 +36,7 @@ public final class Main {
               blackseq testfiles <dir>
                   Write the three test patterns of the phase 1 checkpoint (00.SEQ, 01.SEQ,
                   02.SEQ) into <dir>. The directory must exist. No file is replaced.
-            """;
+            """ + ConvertCommand.USAGE;
 
     private Main() {}
 
@@ -54,6 +55,7 @@ public final class Main {
                 case "dump" -> dump(args, out);
                 case "diff" -> diff(args, out);
                 case "testfiles" -> testFiles(args, out);
+                case "convert" -> ConvertCommand.run(args, out, err);
                 default -> throw new UsageException("Unknown command: " + args[0]);
             };
         } catch (UsageException e) {
@@ -61,13 +63,14 @@ public final class Main {
             err.print(USAGE);
             return EXIT_ERROR;
         } catch (FileAlreadyExistsException e) {
-            err.println("File exists, not replaced: " + e.getFile());
+            err.println("File exists, not replaced: " + e.getFile()
+                    + (e.getReason() == null ? "" : " (" + e.getReason() + ")"));
             return EXIT_ERROR;
         } catch (NoSuchFileException e) {
-            err.println("File not found: " + e.getFile());
+            err.println("File not found: " + e.getFile() + (e.getReason() == null ? "" : ". " + e.getReason()));
             return EXIT_ERROR;
         } catch (IOException e) {
-            err.println("File error: " + e);
+            err.println("File error: " + e.getMessage());
             return EXIT_ERROR;
         }
     }
@@ -142,7 +145,7 @@ public final class Main {
         return EXIT_OK;
     }
 
-    private static Path path(String text) {
+    static Path path(String text) {
         try {
             return Path.of(text);
         } catch (InvalidPathException e) {
@@ -150,7 +153,7 @@ public final class Main {
         }
     }
 
-    private static int number(String[] args, int index, String option) {
+    static int number(String[] args, int index, String option) {
         if (index >= args.length) {
             throw new UsageException(option + ": the value is missing");
         }
@@ -168,7 +171,7 @@ public final class Main {
         }
     }
 
-    private static final class UsageException extends RuntimeException {
+    static final class UsageException extends RuntimeException {
         UsageException(String message) {
             super(message);
         }
