@@ -1,8 +1,9 @@
 # Black Sequencer `.SEQ` format
 
 Status of this document: **phase 1.** All fields that version 1 needs are confirmed by
-samples. `blackseq.format.SeqFile` reads and writes them. No test on the module has shown
-that the module accepts a file that this library made (Q5).
+samples. `blackseq.format.SeqFile` reads and writes them. Nate tested three generated
+files on the module on 2026-11-23: all three loaded and played correctly (see "Module
+tests").
 
 ## Rules for this document
 
@@ -172,13 +173,22 @@ must not write them:
 Open point for phase 3: does the module load a pattern file in a bank folder that the
 module did not make, and must `BANK.DAT` list the pattern? See Q5.
 
+## Module tests
+
+| Date | Files | Result (reported by Nate) |
+| --- | --- | --- |
+| 2026-11-23 | `samples/blackseq/generated/phase1/00.SEQ`, `01.SEQ`, `02.SEQ`, copied by a computer to `PROJECTS/RETEST/01`. Firmware 1.06 | All three patterns loaded and played correctly |
+
+This shows that the module loads a pattern file that a computer copied into an existing
+bank folder, and that it accepts files with changed notes and a changed track length.
+It does not cover muted steps, gate lengths other than 50 %, or channels CH2 to CH4.
+
 ## Open questions
 
 | # | Question | What answers it |
 | --- | --- | --- |
 | Q4 | **MIDI note number. Decided without a test (Nate, 2026-11-22): file value = MIDI note × 100, so MIDI note 36 is C-3. If a converted file plays in the wrong octave, change the default transpose.** Original question: the file value 3600 is the note that the module shows as C-3. Which MIDI note number is that on the MIDI input and output of the module? The converter needs this. | Nate: send one known MIDI note to the module and read the note name, or tell which convention you want. Without a test, the converter uses value = MIDI note × 100 and reports the octave name that the module shows. |
-| Q5 | Does the module load a `.SEQ` file that a computer copied into a bank folder? | The phase 1 checkpoint (three generated files on a test card). |
-| Q6 | Merge of three or more steps: do all steps except the last one get bit 1? | A sample with steps 1 to 3 merged. Necessary only if the converter writes merged steps. |
+| Q6 | Merge of three or more steps: do all steps except the last one get bit 1? The factory file `FACTORY/00/00.SEQ` has CH1 steps 1 to 3 with gate flags 3 and step 4 with gate flags 1, which agrees. That is supporting evidence, not proof. | A sample with steps 1 to 3 merged. Necessary before the converter writes notes longer than one step. |
 
 ## Decisions for the model, from these results
 
