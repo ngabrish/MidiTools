@@ -76,6 +76,8 @@ Record each change to a signature of the brief here, with the reason.
 | `SeqFile.fromPattern` added | The CLI and the Synthnomicon web API must build a file with the same code |
 | `PatternText` added (`noteName`, `trackLine`) | Moved from the CLI. Each program must show the note names that the module shows |
 | `ConversionWarning` has the field `kind` (`WarningKind`) | A user interface filters and counts warnings by kind. The CLI read the kind from the message text before |
+| `ConversionWarning` has the fields `sourceClip` and `note` | A user interface shows a warning at the note that it is about. The channel and the beat do not identify one note of a chord |
+| `NoteEdits` added (`moved`, `resized`, `repitched`, `created`) | The note editor of Synthnomicon names a pattern, a step and a pitch. The reverse of the converter's decisions must be here, not in a user interface |
 | `ProjectFolder.patternName`, `BANKS`, `PATTERNS_PER_BANK` added | A program that makes a zip file needs the name of a pattern file and the limits, and must not hold them itself |
 
 ## Card safety

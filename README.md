@@ -77,7 +77,7 @@ and the dependency to the `pom.xml` of the project; `core` comes with `blackseq-
 <dependency>
   <groupId>com.github.ngabrish.MidiTools</groupId>
   <artifactId>blackseq-lib</artifactId>
-  <version>blackseq-lib-v1.0</version>
+  <version>blackseq-lib-v1.1</version>
 </dependency>
 ```
 
