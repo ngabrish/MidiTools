@@ -149,6 +149,8 @@ class StepConverterTest {
         assertEquals("Note 60 shortened: the note is 4.00 steps long and gets 2, because the next note starts at step 3.",
                 plan.warnings().get(0).message());
         assertEquals(WarningKind.SHORTENED, plan.warnings().get(0).kind());
+        assertEquals(0, plan.warnings().get(0).sourceClip());
+        assertTrue(plan.warnings().get(0).note() == longNote, "the warning holds the source note object");
         assertEquals(1, plan.warnings().get(0).channel());
         assertEquals(0.0, plan.warnings().get(0).atBeats());
 
@@ -400,6 +402,7 @@ class StepConverterTest {
         List<ConversionWarning> found = converter.validate(conflict);
         assertEquals(1, found.size());
         assertEquals(WarningKind.CONFLICT, found.get(0).kind());
+        assertEquals(0, found.get(0).sourceClip());
         assertTrue(found.get(0).message().contains("CH1 pattern 0 step 1 has two notes"), found.get(0).message());
         assertThrows(ConversionException.class, () -> converter.apply(conflict));
     }
@@ -462,5 +465,22 @@ class StepConverterTest {
                 new ConversionOptions(4, ChordPolicy.SPREAD, OverflowPolicy.SPLIT, 0));
         assertEquals(1, plan.warnings().size());
         assertEquals(WarningKind.MOVED, plan.warnings().get(0).kind());
+    }
+
+    @Test
+    void eachWarningNamesItsSourceClipAndItsNote() {
+        NoteEvent high = at(1, 64);
+        NoteEvent low = at(1, 60);                                      // dropped: chord
+        NoteEvent offGrid = new NoteEvent(SIXTEENTH * 2.4, SIXTEENTH / 2, 62, 100);
+        ConversionPlan plan = converter.plan(
+                List.of(clip(4, at(1, 50)), clip(4, high, low, offGrid)), ConversionOptions.defaults());
+        assertEquals(2, plan.warnings().size());
+        for (ConversionWarning w : plan.warnings()) {
+            assertEquals(1, w.sourceClip());
+            assertEquals(2, w.channel());
+            assertEquals(w.note().startBeats(), w.atBeats());
+        }
+        assertTrue(plan.warnings().stream().anyMatch(w -> w.note() == low && w.kind() == WarningKind.DROPPED));
+        assertTrue(plan.warnings().stream().anyMatch(w -> w.note() == offGrid && w.kind() == WarningKind.MOVED));
     }
 }

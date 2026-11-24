@@ -162,7 +162,7 @@ public final class StepConverter {
                 if (!used.add(key)) {
                     found.add(new ConversionWarning(WarningKind.CONFLICT, a.channel(), a.note().startBeats(),
                             "conflict: CH" + a.channel() + " pattern " + a.pattern() + " step " + step
-                                    + " has two notes"));
+                                    + " has two notes", a.sourceClip(), a.note()));
                     break;
                 }
             }
@@ -170,7 +170,8 @@ public final class StepConverter {
             if (pitch < 0 || pitch > 127) {
                 found.add(new ConversionWarning(WarningKind.CONFLICT, a.channel(), a.note().startBeats(),
                         "conflict: with transpose " + plan.options().transpose()
-                                + " the note number is " + pitch + ", outside 0 to 127"));
+                                + " the note number is " + pitch + ", outside 0 to 127",
+                        a.sourceClip(), a.note()));
             }
         }
         return found;
@@ -303,7 +304,9 @@ public final class StepConverter {
                 steps, gate);
     }
 
+    /** A warning for a note of the clip of {@code channel}: clip 0 goes to CH1. */
     private static ConversionWarning warn(WarningKind kind, int channel, NoteEvent n, String text) {
-        return new ConversionWarning(kind, channel, n.startBeats(), "Note " + n.midiNote() + " " + text + ".");
+        return new ConversionWarning(kind, channel, n.startBeats(), "Note " + n.midiNote() + " " + text + ".",
+                channel - 1, n);
     }
 }
