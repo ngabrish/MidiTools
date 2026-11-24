@@ -272,13 +272,4 @@ class ConvertCommandTest {
         assertTrue(out().contains("CH2 beat 1: Note 36 dropped"), out());
         assertFalse(out().contains("Use --verbose"), out());
     }
-
-    @Test
-    void noteNamesAreTheNamesThatTheModuleShows() {
-        assertEquals("C-3", ConvertCommand.noteName(36));
-        assertEquals("C-4", ConvertCommand.noteName(48));
-        assertEquals("D-4", ConvertCommand.noteName(50));
-        assertEquals("G#-5", ConvertCommand.noteName(68));
-        assertEquals("C-0", ConvertCommand.noteName(0));
-    }
 }

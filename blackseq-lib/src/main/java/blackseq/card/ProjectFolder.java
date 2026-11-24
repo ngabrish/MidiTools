@@ -27,6 +27,10 @@ public final class ProjectFolder {
     /** Folder for the old content of replaced pattern files. */
     static final String BACKUP_FOLDER = "BACKUP";
     private static final int MAX_BACKUPS = 999;
+    /** Number of banks in a project. */
+    public static final int BANKS = 16;
+    /** Number of patterns in a bank. */
+    public static final int PATTERNS_PER_BANK = 16;
 
     private final Path dir;
 
@@ -58,9 +62,27 @@ public final class ProjectFolder {
      * @param pattern 1 to 16
      */
     public Path patternPath(int bank, int pattern) {
-        check("bank", bank);
-        check("pattern", pattern);
-        return bankDir(bank).resolve(twoDigits(pattern - 1) + ".SEQ");
+        check("bank", bank, BANKS);
+        check("pattern", pattern, PATTERNS_PER_BANK);
+        return bankDir(bank).resolve(patternFile(pattern));
+    }
+
+    /**
+     * The name of a pattern file in its project folder, with {@code /} between the bank
+     * folder and the file: {@code 01/03.SEQ} for bank 2, pattern 4. A program that does not
+     * write to a project folder, for example one that makes a zip file, uses this name.
+     *
+     * @param bank    1 to 16
+     * @param pattern 1 to 16
+     */
+    public static String patternName(int bank, int pattern) {
+        check("bank", bank, BANKS);
+        check("pattern", pattern, PATTERNS_PER_BANK);
+        return twoDigits(bank - 1) + "/" + patternFile(pattern);
+    }
+
+    private static String patternFile(int pattern) {
+        return twoDigits(pattern - 1) + ".SEQ";
     }
 
     /**
@@ -125,9 +147,9 @@ public final class ProjectFolder {
         return String.format("%02d", n);
     }
 
-    private static void check(String what, int value) {
-        if (value < 1 || value > 16) {
-            throw new IllegalArgumentException(what + " must be 1 to 16: " + value);
+    private static void check(String what, int value, int max) {
+        if (value < 1 || value > max) {
+            throw new IllegalArgumentException(what + " must be 1 to " + max + ": " + value);
         }
     }
 }

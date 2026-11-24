@@ -295,4 +295,25 @@ class SeqFileTest {
         Path f = Files.write(dir.resolve("x.SEQ"), new byte[] {1, 2, 3});
         assertThrows(SeqFormatException.class, () -> SeqFile.read(f));
     }
+
+
+    // ----- fromPattern -----
+
+    @Test
+    void fromPatternIsTheBlankPatternWithTheMasterTrackLengthOfTheLongestTrack() {
+        Pattern blank = SeqFile.blank().pattern();
+        List<Track> tracks = new ArrayList<>(blank.tracks());
+        tracks.set(2, new Track(32, blank.tracks().get(2).steps()));
+        Pattern p = withStep(new Pattern(tracks), 1, 1, note(48));
+
+        SeqFile file = SeqFile.fromPattern(p);
+        assertEquals(SeqFile.blank().withPattern(p).withMasterTrackLength(32), file);
+        assertEquals(32, file.masterTrackLength());
+        assertEquals(p, file.pattern());
+    }
+
+    @Test
+    void fromPatternOfTheBlankPatternIsTheBlankFile() {
+        assertEquals(SeqFile.blank(), SeqFile.fromPattern(SeqFile.blank().pattern()));
+    }
 }

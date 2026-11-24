@@ -148,6 +148,7 @@ class StepConverterTest {
         assertEquals(1, plan.warnings().size());
         assertEquals("Note 60 shortened: the note is 4.00 steps long and gets 2, because the next note starts at step 3.",
                 plan.warnings().get(0).message());
+        assertEquals(WarningKind.SHORTENED, plan.warnings().get(0).kind());
         assertEquals(1, plan.warnings().get(0).channel());
         assertEquals(0.0, plan.warnings().get(0).atBeats());
 
@@ -398,6 +399,7 @@ class StepConverterTest {
         ConversionPlan conflict = plan.withAssignment(1, new Assignment(0, at(2, 62), 1, 0, 1, 0.5));
         List<ConversionWarning> found = converter.validate(conflict);
         assertEquals(1, found.size());
+        assertEquals(WarningKind.CONFLICT, found.get(0).kind());
         assertTrue(found.get(0).message().contains("CH1 pattern 0 step 1 has two notes"), found.get(0).message());
         assertThrows(ConversionException.class, () -> converter.apply(conflict));
     }
@@ -426,5 +428,39 @@ class StepConverterTest {
         assertEquals(64, new Assignment(0, n, 1, 0, 60, 5, 0.5).lastStep());
         assertThrows(IllegalArgumentException.class,
                 () -> new ConversionOptions(0, ChordPolicy.HIGHEST, OverflowPolicy.SPLIT, 0));
+    }
+
+
+    // ----- warning kinds -----
+
+    @Test
+    void eachWarningHasTheKindThatItsMessageNames() {
+        NoteEvent offGrid = new NoteEvent(SIXTEENTH * 1.4, SIXTEENTH / 2, 60, 100);   // moved
+        NoteEvent longNote = new NoteEvent(4 * SIXTEENTH, 4 * SIXTEENTH, 62, 100);    // shortened by the next note
+        NoteEvent next = at(7, 64);
+        NoteEvent chordLow = at(9, 50);                                               // dropped: chord
+        NoteEvent chordHigh = at(9, 55);
+        NoteEvent tooHigh = at(11, 127);                                              // dropped: transpose
+        NoteEvent afterTheEnd = at(70, 60);                                           // dropped: TRUNCATE
+        ConversionPlan plan = converter.plan(
+                List.of(clip(32, offGrid, longNote, next, chordLow, chordHigh, tooHigh, afterTheEnd)),
+                new ConversionOptions(4, ChordPolicy.HIGHEST, OverflowPolicy.TRUNCATE, 1));
+
+        assertEquals(5, plan.warnings().size());
+        for (ConversionWarning w : plan.warnings()) {
+            String word = w.kind().name().toLowerCase(java.util.Locale.ROOT);
+            assertTrue(w.message().contains(" " + word + ": "), w.kind() + " / " + w.message());
+        }
+        assertEquals(3, plan.warnings().stream().filter(w -> w.kind() == WarningKind.DROPPED).count());
+        assertEquals(1, plan.warnings().stream().filter(w -> w.kind() == WarningKind.MOVED).count());
+        assertEquals(1, plan.warnings().stream().filter(w -> w.kind() == WarningKind.SHORTENED).count());
+    }
+
+    @Test
+    void chordNoteThatGoesToAFreeChannelIsMoved() {
+        ConversionPlan plan = converter.plan(List.of(clip(4, at(1, 60), at(1, 64))),
+                new ConversionOptions(4, ChordPolicy.SPREAD, OverflowPolicy.SPLIT, 0));
+        assertEquals(1, plan.warnings().size());
+        assertEquals(WarningKind.MOVED, plan.warnings().get(0).kind());
     }
 }

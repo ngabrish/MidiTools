@@ -1,0 +1,5 @@
+# Build settings for jitpack.io, which makes the modules available as Maven artifacts
+# from a git tag. The default Java of JitPack is older than the Java 17 level of this
+# repository.
+jdk:
+  - openjdk17

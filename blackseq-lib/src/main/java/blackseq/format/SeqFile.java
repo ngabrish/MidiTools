@@ -77,6 +77,19 @@ public final class SeqFile {
         }
     }
 
+    /**
+     * The file for a new pattern: the blank pattern with the known fields of {@code p}.
+     * The master track length is the length of the longest track, so that the module
+     * plays each track to its end before it goes to the next pattern.
+     */
+    public static SeqFile fromPattern(Pattern p) {
+        int longest = 1;
+        for (Track track : p.tracks()) {
+            longest = Math.max(longest, track.length());
+        }
+        return blank().withPattern(p).withMasterTrackLength(longest);
+    }
+
     /** Decodes the known fields. Each track has 64 steps. */
     public Pattern pattern() {
         List<Track> tracks = new ArrayList<>();

@@ -89,7 +89,7 @@ public final class StepConverter {
                 int pitch = n.midiNote() + options.transpose();
                 if (pitch < 0 || pitch > 127) {
                     dropped.add(n);
-                    warnings.add(warn(channel, n, "dropped: with transpose " + options.transpose()
+                    warnings.add(warn(WarningKind.DROPPED, channel, n, "dropped: with transpose " + options.transpose()
                             + " the note number is " + pitch + ", outside 0 to 127"));
                     continue;
                 }
@@ -97,12 +97,12 @@ public final class StepConverter {
                 int index = Math.min((int) Math.floor(position + 0.5), total - 1);
                 if (index >= kept) {
                     dropped.add(n);
-                    warnings.add(warn(channel, n, "dropped: the note is after step " + PATTERN_STEPS
+                    warnings.add(warn(WarningKind.DROPPED, channel, n, "dropped: the note is after step " + PATTERN_STEPS
                             + " and the overflow policy is TRUNCATE"));
                     continue;
                 }
                 if (Math.abs(position - index) > GRID_TOLERANCE) {
-                    warnings.add(warn(channel, n, String.format(Locale.ROOT,
+                    warnings.add(warn(WarningKind.MOVED, channel, n, String.format(Locale.ROOT,
                             "moved: the note starts at step position %.2f and goes to step %d",
                             position + 1, index % PATTERN_STEPS + 1)));
                 }
@@ -121,14 +121,14 @@ public final class StepConverter {
                             ? freeChannel(clips.size(), starts, other.index()) : 0;
                     if (free == 0) {
                         dropped.add(other.note());
-                        warnings.add(warn(channel, other.note(), "dropped: step "
+                        warnings.add(warn(WarningKind.DROPPED, channel, other.note(), "dropped: step "
                                 + (other.index() % PATTERN_STEPS + 1) + " has a different note"
                                 + (options.chords() == ChordPolicy.SPREAD ? " and no channel is free"
                                 : " (chord policy " + options.chords() + ")")));
                     } else {
                         starts.get(free - 1).put(other.index(), other);
                         channelSteps[free - 1] = Math.max(channelSteps[free - 1], kept);
-                        warnings.add(warn(channel, other.note(), "moved: chord note goes to CH" + free));
+                        warnings.add(warn(WarningKind.MOVED, channel, other.note(), "moved: chord note goes to CH" + free));
                     }
                 }
             }
@@ -160,7 +160,7 @@ public final class StepConverter {
             for (int step = a.step(); step <= a.lastStep(); step++) {
                 long key = a.channel() * 1_000_000L + (long) a.pattern() * PATTERN_STEPS + step;
                 if (!used.add(key)) {
-                    found.add(new ConversionWarning(a.channel(), a.note().startBeats(),
+                    found.add(new ConversionWarning(WarningKind.CONFLICT, a.channel(), a.note().startBeats(),
                             "conflict: CH" + a.channel() + " pattern " + a.pattern() + " step " + step
                                     + " has two notes"));
                     break;
@@ -168,7 +168,7 @@ public final class StepConverter {
             }
             int pitch = a.note().midiNote() + plan.options().transpose();
             if (pitch < 0 || pitch > 127) {
-                found.add(new ConversionWarning(a.channel(), a.note().startBeats(),
+                found.add(new ConversionWarning(WarningKind.CONFLICT, a.channel(), a.note().startBeats(),
                         "conflict: with transpose " + plan.options().transpose()
                                 + " the note number is " + pitch + ", outside 0 to 127"));
             }
@@ -293,7 +293,7 @@ public final class StepConverter {
         if (wanted > limit) {
             steps = limit;
             gate = LONGEST_GATE;
-            warnings.add(warn(p.clip() + 1, p.note(), String.format(Locale.ROOT,
+            warnings.add(warn(WarningKind.SHORTENED, p.clip() + 1, p.note(), String.format(Locale.ROOT,
                     "shortened: the note is %.2f steps long and gets %d, because %s", length, steps, reason)));
         } else {
             steps = wanted;
@@ -303,7 +303,7 @@ public final class StepConverter {
                 steps, gate);
     }
 
-    private static ConversionWarning warn(int channel, NoteEvent n, String text) {
-        return new ConversionWarning(channel, n.startBeats(), "Note " + n.midiNote() + " " + text + ".");
+    private static ConversionWarning warn(WarningKind kind, int channel, NoteEvent n, String text) {
+        return new ConversionWarning(kind, channel, n.startBeats(), "Note " + n.midiNote() + " " + text + ".");
     }
 }

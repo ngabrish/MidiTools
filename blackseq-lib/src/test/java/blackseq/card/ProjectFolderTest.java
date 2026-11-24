@@ -153,4 +153,24 @@ class ProjectFolderTest {
             assertTrue(f.startsWith(projectDir), "a file outside the project folder: " + f);
         }
     }
+
+
+    @Test
+    void patternNameIsThePathInsideTheProjectFolderWithASlash() throws IOException {
+        assertEquals("00/00.SEQ", ProjectFolder.patternName(1, 1));
+        assertEquals("01/03.SEQ", ProjectFolder.patternName(2, 4));
+        assertEquals("15/15.SEQ", ProjectFolder.patternName(ProjectFolder.BANKS, ProjectFolder.PATTERNS_PER_BANK));
+        assertThrows(IllegalArgumentException.class, () -> ProjectFolder.patternName(0, 1));
+        assertThrows(IllegalArgumentException.class, () -> ProjectFolder.patternName(17, 1));
+        assertThrows(IllegalArgumentException.class, () -> ProjectFolder.patternName(1, 0));
+        assertThrows(IllegalArgumentException.class, () -> ProjectFolder.patternName(1, 17));
+
+        ProjectFolder project = ProjectFolder.open(projectDir);
+        for (int bank = 1; bank <= ProjectFolder.BANKS; bank++) {
+            for (int pattern = 1; pattern <= ProjectFolder.PATTERNS_PER_BANK; pattern++) {
+                String[] parts = ProjectFolder.patternName(bank, pattern).split("/");
+                assertEquals(projectDir.resolve(parts[0]).resolve(parts[1]), project.patternPath(bank, pattern));
+            }
+        }
+    }
 }
