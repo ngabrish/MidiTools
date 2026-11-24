@@ -9,10 +9,10 @@ import blackseq.convert.ConversionPlan;
 import blackseq.convert.ConversionWarning;
 import blackseq.convert.OverflowPolicy;
 import blackseq.convert.StepConverter;
+import blackseq.convert.WarningKind;
 import blackseq.format.SeqFile;
 import blackseq.model.Pattern;
-import blackseq.model.Step;
-import blackseq.model.Track;
+import blackseq.model.PatternText;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.FileAlreadyExistsException;
@@ -49,12 +49,9 @@ final class ConvertCommand {
                   --overflow <policy>   SPLIT (default), TRUNCATE or FAIL.
             """;
 
-    private static final String[] NOTE_NAMES = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
-    private static final int LAST_PATTERN = 16;
+    private static final int LAST_PATTERN = ProjectFolder.PATTERNS_PER_BANK;
     /** With more warnings than this, the command prints counts unless --verbose is given. */
     static final int MAX_WARNING_LINES = 10;
-    /** The kinds of warning, as the converter writes them at the start of a message. */
-    private static final String[] WARNING_KINDS = {"dropped", "moved", "shortened"};
 
     private ConvertCommand() {}
 
@@ -162,11 +159,10 @@ final class ConvertCommand {
             printWarningCounts(plan.warnings(), out);
         }
 
-        // 3. Build the files. The master track length is the longest track of the pattern.
+        // 3. Build the files.
         List<SeqFile> files = new ArrayList<>();
         for (Pattern p : patterns) {
-            int longest = p.tracks().stream().mapToInt(Track::length).max().orElse(16);
-            files.add(SeqFile.blank().withPattern(p).withMasterTrackLength(longest));
+            files.add(SeqFile.fromPattern(p));
         }
         int first = pattern == null ? 1 : pattern;
         if (first + files.size() - 1 > LAST_PATTERN) {
@@ -178,7 +174,7 @@ final class ConvertCommand {
             out.println();
             out.println("Pattern " + (first + i) + ":");
             for (int c = 0; c < Pattern.CHANNELS; c++) {
-                out.println("  " + line(c + 1, patterns.get(i).tracks().get(c)));
+                out.println("  " + PatternText.trackLine(c + 1, patterns.get(i).tracks().get(c)));
             }
         }
         out.println();
@@ -216,12 +212,11 @@ final class ConvertCommand {
 
     /** One line for each kind of warning and for each channel that has warnings of that kind. */
     private static void printWarningCounts(List<ConversionWarning> warnings, PrintStream out) {
-        int counted = 0;
-        for (String kind : WARNING_KINDS) {
+        for (WarningKind kind : WarningKind.values()) {
             int[] perChannel = new int[Pattern.CHANNELS + 1];
             int total = 0;
             for (ConversionWarning w : warnings) {
-                if (w.message().contains(" " + kind + ": ")) {
+                if (w.kind() == kind) {
                     perChannel[w.channel()]++;
                     total++;
                 }
@@ -234,43 +229,10 @@ final class ConvertCommand {
                                 .append(perChannel[c]);
                     }
                 }
-                out.printf(Locale.ROOT, "  %4d %s (%s)%n", total, kind, channels);
-                counted += total;
+                out.printf(Locale.ROOT, "  %4d %s (%s)%n", total, kind.name().toLowerCase(Locale.ROOT), channels);
             }
-        }
-        if (counted < warnings.size()) {
-            out.printf(Locale.ROOT, "  %4d other%n", warnings.size() - counted);
         }
         out.println("  Use --verbose to print each warning.");
-    }
-
-    /** One line for a track: the steps that play, with the note names that the module shows. */
-    static String line(int channel, Track track) {
-        StringBuilder sb = new StringBuilder("CH" + channel + " (" + track.length() + " steps):");
-        boolean any = false;
-        for (int s = 0; s < track.length(); s++) {
-            Step step = track.steps().get(s);
-            boolean held = s > 0 && track.steps().get(s - 1).mergeNext() && track.steps().get(s - 1).gateOn();
-            if (s % 16 == 0 && track.length() > 16) {
-                sb.append(System.lineSeparator()).append("     ");
-            }
-            sb.append(' ');
-            if (!step.gateOn()) {
-                sb.append('.');
-            } else if (held) {
-                sb.append('~');
-                any = true;
-            } else {
-                sb.append(noteName(step.midiNote()));
-                any = true;
-            }
-        }
-        return any ? sb.toString() : "CH" + channel + " (" + track.length() + " steps): no notes";
-    }
-
-    /** The note name as the module shows it: MIDI note 36 is C-3. */
-    static String noteName(int midiNote) {
-        return NOTE_NAMES[midiNote % 12] + "-" + midiNote / 12;
     }
 
     private static String trim(double value) {

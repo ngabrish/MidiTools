@@ -1,5 +1,6 @@
 package miditools.core.midi;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -38,14 +39,32 @@ public final class MidiFileReader {
      *                     time, which has no beats
      */
     public static List<NoteClip> read(Path midiFile) throws IOException {
-        Sequence sequence;
         try {
-            sequence = MidiSystem.getSequence(midiFile.toFile());
+            return clips(MidiSystem.getSequence(midiFile.toFile()), midiFile.toString());
         } catch (InvalidMidiDataException e) {
             throw new IOException("Not a MIDI file that Java can read: " + midiFile + " (" + e.getMessage() + ")", e);
         }
+    }
+
+    /**
+     * Reads the clips of MIDI file data that is not in a file, for example an upload. The
+     * result is the same as {@link #read(Path)} gives for a file with these bytes.
+     *
+     * @param data the bytes of a Standard MIDI File
+     * @param name a name for the data in error messages, for example the file name
+     * @throws IOException if the data is not a MIDI file, or uses SMPTE time
+     */
+    public static List<NoteClip> read(byte[] data, String name) throws IOException {
+        try {
+            return clips(MidiSystem.getSequence(new ByteArrayInputStream(data)), name);
+        } catch (InvalidMidiDataException e) {
+            throw new IOException("Not a MIDI file that Java can read: " + name + " (" + e.getMessage() + ")", e);
+        }
+    }
+
+    private static List<NoteClip> clips(Sequence sequence, String source) throws IOException {
         if (sequence.getDivisionType() != Sequence.PPQ) {
-            throw new IOException("The MIDI file uses SMPTE time and has no beats: " + midiFile);
+            throw new IOException("The MIDI file uses SMPTE time and has no beats: " + source);
         }
         double ticksPerBeat = sequence.getResolution();
         Track[] tracks = sequence.getTracks();

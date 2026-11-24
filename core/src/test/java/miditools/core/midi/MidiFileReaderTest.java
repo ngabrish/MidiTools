@@ -172,4 +172,28 @@ class MidiFileReaderTest {
         IOException e = assertThrows(IOException.class, () -> MidiFileReader.read(write(sequence, "smpte.mid")));
         assertTrue(e.getMessage().contains("SMPTE"), e.getMessage());
     }
+
+
+    @Test
+    void bytesGiveTheSameClipsAsTheFile() throws Exception {
+        Sequence sequence = new Sequence(Sequence.PPQ, PPQ);
+        Track bass = sequence.createTrack();
+        name(bass, "Bass");
+        note(bass, 0, 36, 0, 120);
+        note(bass, 0, 43, 3 * PPQ + 240, 480);
+        note(sequence.createTrack(), 1, 72, PPQ, 240);
+        Path file = write(sequence, "bytes.mid");
+
+        List<NoteClip> fromBytes = MidiFileReader.read(Files.readAllBytes(file), "upload.mid");
+        assertEquals(2, fromBytes.size());
+        assertEquals(MidiFileReader.read(file), fromBytes);
+    }
+
+    @Test
+    void bytesThatAreNotAMidiFileAreRefusedWithTheirName() {
+        IOException e = assertThrows(IOException.class,
+                () -> MidiFileReader.read("not a MIDI file".getBytes(StandardCharsets.ISO_8859_1), "upload.mid"));
+        assertTrue(e.getMessage().contains("upload.mid"), e.getMessage());
+        assertThrows(IOException.class, () -> MidiFileReader.read(new byte[0], "empty.mid"));
+    }
 }

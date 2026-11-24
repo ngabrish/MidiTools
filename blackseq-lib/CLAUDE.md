@@ -9,7 +9,7 @@ A wrong byte can corrupt a pattern on the module. Accuracy is more important tha
 
 | Package | Purpose | Depends on |
 | --- | --- | --- |
-| `blackseq.model` | Immutable pattern data | nothing |
+| `blackseq.model` | Immutable pattern data; note names and track text (`PatternText`) | nothing |
 | `blackseq.format` | Read and write `.SEQ` bytes; hex dump and byte diff | `model` |
 | `blackseq.convert` | Notes to steps (`plan()` then `apply()`) | `model`, `core` |
 | `blackseq.card` | Project folder layout and safe writes | `format` |
@@ -40,6 +40,15 @@ A wrong byte can corrupt a pattern on the module. Accuracy is more important tha
   only when the format work makes it necessary, and record the reason in `FORMAT.md`.
 - **No user-interface code** in this module.
 
+## Users of this library
+
+- `blackseq-cli` in this repository.
+- The Synthnomicon web application (`ngabrish/synthnomicon`) gets `blackseq-lib` and `core`
+  from JitPack, built from a tag `blackseq-lib-v<version>`. `jitpack.yml` in the repository
+  root sets the Java version of that build. Synthnomicon holds no format code and no
+  conversion logic, so each thing that it needs must be public here.
+- A change to a public signature needs a new tag, and then a version change in Synthnomicon.
+
 ## Converter rules
 
 - `plan()` decides, `apply()` builds. Put no placement logic in `apply()` and none in a
@@ -64,6 +73,10 @@ Record each change to a signature of the brief here, with the reason.
 | `Assignment` has the field `steps` | The number of steps that a note holds. `gateLength` is the gate of the last step |
 | `ConversionException` added | `OverflowPolicy.FAIL` and a plan conflict need an exception type |
 | `ConversionOptions.defaults()` added | One place for the default values of the CLI and a later user interface |
+| `SeqFile.fromPattern` added | The CLI and the Synthnomicon web API must build a file with the same code |
+| `PatternText` added (`noteName`, `trackLine`) | Moved from the CLI. Each program must show the note names that the module shows |
+| `ConversionWarning` has the field `kind` (`WarningKind`) | A user interface filters and counts warnings by kind. The CLI read the kind from the message text before |
+| `ProjectFolder.patternName`, `BANKS`, `PATTERNS_PER_BANK` added | A program that makes a zip file needs the name of a pattern file and the limits, and must not hold them itself |
 
 ## Card safety
 

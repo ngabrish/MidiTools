@@ -6,6 +6,8 @@ Neutral note data and the MIDI file reader. Other tools will use this module.
 - `miditools.core.midi`: `MidiFileReader` (`javax.sound.midi`). Depends on `note`.
   One clip for each track and MIDI channel that has notes. All clips of a file have the
   same length: the file length, increased to the end of its last bar.
+  `read(Path)` reads a file. `read(byte[], name)` reads data that is not in a file, for
+  example an upload to a web application.
 
 Rules:
 

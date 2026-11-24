@@ -61,6 +61,26 @@ between two files.
 After a build, the file is `blackseq-cli/target/blackseq.jar`. Each CI run on GitHub also
 has it as the artifact `blackseq-jar`.
 
+### Use the library in a different project
+
+[JitPack](https://jitpack.io) builds the library from a release tag. Add the repository
+and the dependency to the `pom.xml` of the project; `core` comes with `blackseq-lib`.
+
+```xml
+<repositories>
+  <repository>
+    <id>jitpack.io</id>
+    <url>https://jitpack.io</url>
+  </repository>
+</repositories>
+
+<dependency>
+  <groupId>com.github.ngabrish.MidiTools</groupId>
+  <artifactId>blackseq-lib</artifactId>
+  <version>blackseq-lib-v1.0</version>
+</dependency>
+```
+
 ## Credits
 
 The format notes use [black_seq_gui](https://github.com/ph1r3574r73r/black_seq_gui) by
