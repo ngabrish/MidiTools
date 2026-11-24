@@ -16,7 +16,13 @@ samples/blackseq/  pattern files that Nate saved on the module
 ```
 
 Each module has its own `CLAUDE.md` with the rules for that module.
-`blackseq-gui/` and `bitwig-extension/` are planned. Do not create them now.
+`bitwig-extension/` is planned. Do not create it now.
+
+There is no desktop GUI in this repository. Nate decided (2026-11-24) to replace the
+JavaFX program of the first brief with the web GUI in the Synthnomicon application
+(`ngabrish/synthnomicon`): MIDI conversion, note editing, a pattern editor, saved
+patterns and a browser preview. Do not create `blackseq-gui/`. `blackseq-lib` has no
+user-interface code, so a desktop program stays possible later.
 
 ## Build
 
