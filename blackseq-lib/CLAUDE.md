@@ -43,7 +43,8 @@ A wrong byte can corrupt a pattern on the module. Accuracy is more important tha
 ## Users of this library
 
 - `blackseq-cli` in this repository.
-- The Synthnomicon web application (`ngabrish/synthnomicon`) gets `blackseq-lib` and `core`
+- The Synthnomicon web application (`ngabrish/synthnomicon`) is the GUI for this
+  library; it replaces the JavaFX program of the first brief. It gets `blackseq-lib` and `core`
   from JitPack, built from a tag `blackseq-lib-v<version>`. `jitpack.yml` in the repository
   root sets the Java version of that build. Synthnomicon holds no format code and no
   conversion logic, so each thing that it needs must be public here.

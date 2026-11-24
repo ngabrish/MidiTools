@@ -12,6 +12,11 @@ merged steps and the track length of a pattern file, and converts a MIDI file to
 patterns. Three generated test files loaded and played correctly on the module. A
 converted MIDI file has not been tested on the module at this time. The format notes are in [docs/blackseq/FORMAT.md](docs/blackseq/FORMAT.md).
 
+The graphical user interface is not in this repository. It is a part of the
+Synthnomicon web application ([ngabrish/synthnomicon](https://github.com/ngabrish/synthnomicon)),
+which uses this library: MIDI conversion with a step grid, note editing, a pattern editor
+and saved patterns.
+
 ### Build
 
 Java 17 or later and Maven are necessary.
